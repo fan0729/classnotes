@@ -372,7 +372,7 @@ function removeDoc(id){
   delete dirty[id];clearTimeout(timers[id]);
   if(col){col.doc(id).delete().catch(function(){setStatus('error')})}else saveLocal();
 }
-function touchPage(){var p=cp();if(!p)return;p.updated=Date.now();touch(S.cur);var e=$('#edited');if(e)e.textContent=editedText(p)}
+function touchPage(){var p=cp();if(!p)return;histRec();p.updated=Date.now();touch(S.cur);var e=$('#edited');if(e)e.textContent=editedText(p)}
 function editedText(p){return p.updated?'Edited '+new Date(p.updated).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''}
 
 /* ---------- GitHub sync ----------
@@ -647,6 +647,7 @@ function insertImages(files,refId,before,replaceRef){
     else Array.prototype.splice.apply(pg.blocks,[before?Math.max(i,0):i+1,0].concat(nbs));
     var last=pg.blocks.indexOf(nbs[nbs.length-1]),nx=pg.blocks[last+1];
     if(!nx||nx.t==='img'||nx.t==='hr'){nx=mk('p');pg.blocks.splice(last+1,0,nx)}
+    if(S.cur===pid)histRec();
     pg.updated=Date.now();touch(pid);
     if(S.cur===pid&&S.view==='notes')renderBlocks(nx.id,0);
   });
@@ -707,6 +708,77 @@ function uploadImages(){
     });
   });
 }
+
+/* ---------- undo / redo ----------
+   Per-page snapshots taken on every edit (touchPage). Fast typing in the same block within 1s is one step.
+   Cmd/Ctrl+Z undoes, Cmd/Ctrl+Shift+Z or Ctrl+Y redoes. History lives in memory for this tab. */
+var HIST={};
+function pageState(p){return JSON.stringify({t:p.title||'',c:p.course,d:p.date||'',b:p.blocks})}
+function pageShape(p){return p.blocks.map(function(b){return b.id+':'+b.t+':'+(b.l||0)+':'+(b.c?1:0)}).join('|')+'#'+p.course+'#'+(p.date||'')}
+function caretPos(el){
+  if(el.tagName==='TEXTAREA')return el.selectionStart;
+  var s=getSelection();if(!s.rangeCount||!el.contains(s.anchorNode))return 'end';
+  var r=document.createRange();r.selectNodeContents(el);r.setEnd(s.anchorNode,s.anchorOffset);return r.toString().length;
+}
+function curSel(){
+  var a=document.activeElement;if(!a||!a.closest)return null;
+  if(a.id==='ptitle')return {id:'@title',pos:caretPos(a)};
+  var blk=a.closest('#blocks .blk');if(!blk)return null;
+  return {id:blk.dataset.id,pos:a.classList.contains('txt')?caretPos(a):0};
+}
+function histInit(){
+  var p=cp();if(!p)return;
+  var h=HIST[S.cur],now=pageState(p);
+  if(!h){HIST[S.cur]={u:[],r:[],base:now,shape:pageShape(p),sel:null,t:0,last:null};return}
+  if(h.base!==now){h.u=[];h.r=[];h.base=now;h.shape=pageShape(p);h.t=0} // changed from another device: start fresh
+}
+function histRec(){
+  var p=cp();if(!p)return;
+  var h=HIST[S.cur];if(!h){histInit();return}
+  var now=pageState(p);if(now===h.base)return;
+  var sel=curSel(),shape=pageShape(p),t=Date.now();
+  var typing=shape===h.shape&&sel&&h.last===sel.id&&t-h.t<1000&&h.u.length;
+  if(!typing){h.u.push({s:h.base,sel:h.sel});if(h.u.length>300)h.u.shift()}
+  h.r=[];h.base=now;h.t=shape===h.shape?t:0;h.shape=shape;h.sel=sel;h.last=sel&&sel.id; // a new line or block change ends the typing run
+}
+function histGo(dir){
+  var p=cp();if(!p)return;
+  histRec();
+  var h=HIST[S.cur];if(!h)return;
+  var e=(dir<0?h.u:h.r).pop();if(!e)return;
+  var here=curSel();
+  (dir<0?h.r:h.u).push({s:h.base,sel:here});
+  var o=JSON.parse(e.s),meta=o.t!==(p.title||'')||o.c!==p.course||o.d!==(p.date||'');
+  p.title=o.t;p.course=o.c;p.date=o.d;p.blocks=o.b;
+  h.base=e.s;h.shape=pageShape(p);h.sel=e.sel;h.t=0;h.last=null;
+  p.updated=Date.now();touch(S.cur);
+  if(meta){renderDoc();renderTree()}else renderBlocks();
+  var sl=here&&(here.id==='@title'||findBlock(here.id))?here:e.sel; // stay where you are editing if that spot still exists
+  if(sl&&sl.id==='@title'){var ti=$('#ptitle');if(ti)placeCaret(ti,sl.pos)}
+  else if(sl&&findBlock(sl.id)){
+    var fb=findBlock(sl.id);
+    if(fb.t==='img'){var f=document.querySelector('.blk[data-id="'+sl.id+'"] .imgw');if(f)f.focus()}
+    else if(fb.t!=='hr')focusBlock(sl.id,sl.pos);
+  }
+  var ed=$('#edited');if(ed)ed.textContent=editedText(p);
+}
+function undoTarget(){
+  if(S.view!=='notes'||!cp()||document.querySelector('#layer .ov'))return false;
+  var a=document.activeElement;
+  return !(a&&a.closest&&(a.closest('#side')||a.closest('#layer')));
+}
+document.addEventListener('keydown',function(e){
+  if(!(e.metaKey||e.ctrlKey)||e.altKey)return;
+  var k=(e.key||'').toLowerCase(),undo=k==='z'&&!e.shiftKey,redo=k==='z'&&e.shiftKey||k==='y'&&e.ctrlKey&&!e.metaKey;
+  if((!undo&&!redo)||!undoTarget())return;
+  e.preventDefault();e.stopPropagation();closePop();hideFmt();histGo(undo?-1:1);
+},true);
+/* Edit menu > Undo, and shake-to-undo on phones, arrive as beforeinput */
+$('#doc').addEventListener('beforeinput',function(e){
+  if(e.inputType!=='historyUndo'&&e.inputType!=='historyRedo')return;
+  if(!undoTarget())return;
+  e.preventDefault();histGo(e.inputType==='historyUndo'?-1:1);
+});
 
 /* ---------- sidebar ---------- */
 var CHEV='<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 1.5L7 5 3.5 8.5"/></svg>';
@@ -788,7 +860,7 @@ function renderDoc(){
   $('#ptitle').textContent=p.title||'';
   $('#pdate').value=p.date||'';
   if(!p.blocks.length)p.blocks.push(mk('p'));
-  renderBlocks();
+  renderBlocks();histInit();
 }
 var GRIP='<svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><circle cx="2.5" cy="3" r="1.3"/><circle cx="7.5" cy="3" r="1.3"/><circle cx="2.5" cy="7" r="1.3"/><circle cx="7.5" cy="7" r="1.3"/><circle cx="2.5" cy="11" r="1.3"/><circle cx="7.5" cy="11" r="1.3"/></svg>';
 var PH={p:"Type '/' for blocks",h1:'Heading 1',h2:'Heading 2',h3:'Heading 3',ul:'List item',ol:'List item',todo:'To-do',quote:'Quote',callout:'Key point',code:'Code'};
