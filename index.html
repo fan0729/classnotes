@@ -65,6 +65,8 @@ svg{display:block}
 .sbtn{display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;border-radius:6px;color:var(--muted);font-weight:500;width:100%}
 .sbtn:hover{background:var(--hover);color:var(--fg)}
 .sfoot{font-size:11px;color:var(--faint);padding:6px 8px 0}
+.steps{margin:0 0 14px;padding-left:20px;color:var(--muted);font-size:13px}.steps li{margin:4px 0}.steps a{color:var(--accent)}
+#s_m:empty{display:none}#s_m.err{color:var(--danger)}
 
 .main{display:flex;flex-direction:column;min-width:0;min-height:0}
 .bar{display:flex;align-items:center;gap:8px;height:48px;flex:none;border-bottom:1px solid var(--line);
@@ -252,6 +254,7 @@ textarea.txt::placeholder{color:var(--faint)}
     <button class="navbtn" id="navDl"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.8v2.5M10.5 1.8v2.5"/></svg>Deadlines &amp; calendar<span class="badge" id="dlBadge" hidden></span></button>
     <nav class="tree" id="tree"></nav>
     <button class="sbtn" id="newCourse"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 2v10M2 7h10"/></svg>New course</button>
+    <button class="sbtn" id="syncBtn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5A5 5 0 0 0 3 4M2 8.5A5 5 0 0 0 11 10"/><path d="M3 1.5V4h2.5M11 12.5V10H8.5"/></svg>Sync with GitHub</button>
     <div class="sfoot" id="sfoot"></div>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -286,7 +289,7 @@ var TYPES=[
 function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
-var S={courses:{},pages:{},dl:{},cur:null,q:'',loaded:false,view:'notes',dtab:'list',month:{y:new Date().getFullYear(),m:new Date().getMonth()},sel:null};
+var S={courses:{},pages:{},dl:{},dlUpd:0,tomb:{},cur:null,q:'',loaded:false,view:'notes',dtab:'list',month:{y:new Date().getFullYear(),m:new Date().getMonth()},sel:null};
 var UI=lsGet('ln-ui',{collapsed:{},last:null});
 var col=null, mode='local';
 var dragId=null;
@@ -341,10 +344,15 @@ function setStatus(k){
   var el=$('#status');el.className='status';
   var m={saving:'Saving…',saved:mode==='db'?'Saved':'Saved on this device',error:'Not saved. Edit again to retry.',slow:'Can’t reach your notes yet'}[k]||'';
   if(k==='error')el.className='status err';
-  el.textContent=m;
+  else if(k==='saved'&&syOn()){syShow();return}
+  el.textContent=m;el.title='';
 }
-function saveLocal(){lsSet('ln-data',{courses:S.courses,pages:S.pages,dl:S.dl})}
-function touch(id){dirty[id]=1;setStatus('saving');clearTimeout(timers[id]);timers[id]=setTimeout(function(){flush(id)},700)}
+function writeLocal(){lsSet('ln-data',{courses:S.courses,pages:S.pages,dl:S.dl,dlUpd:S.dlUpd||0,tomb:S.tomb||{}})}
+function saveLocal(){writeLocal();syncSoon(1300)}
+function touch(id){
+  var now=Date.now();
+  if(id==='dl')S.dlUpd=now;else if(S.courses[id])S.courses[id].updated=now;else if(S.pages[id])S.pages[id].updated=Math.max(S.pages[id].updated||0,now);
+  dirty[id]=1;setStatus('saving');clearTimeout(timers[id]);timers[id]=setTimeout(function(){flush(id)},700)}
 function flush(id){
   if(busy[id]){timers[id]=setTimeout(function(){flush(id)},300);return}
   var doc=id==='dl'?{type:'deadlines',items:S.dl}:(S.courses[id]||S.pages[id]);
@@ -355,11 +363,222 @@ function flush(id){
   col.doc(id).set(JSON.parse(JSON.stringify(doc))).then(function(){done(true)},function(){done(false)});
 }
 function removeDoc(id){
+  (S.tomb=S.tomb||{})[id]=Date.now();
   delete dirty[id];clearTimeout(timers[id]);
   if(col){col.doc(id).delete().catch(function(){setStatus('error')})}else saveLocal();
 }
 function touchPage(){var p=cp();if(!p)return;p.updated=Date.now();touch(S.cur);var e=$('#edited');if(e)e.textContent=editedText(p)}
 function editedText(p){return p.updated?'Edited '+new Date(p.updated).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''}
+
+/* ---------- GitHub sync ----------
+   Config (repo + token) lives only in localStorage "ln-sync". Notes go to notes.json in a PRIVATE repo
+   through the Contents API: pull, merge, push only if the merge differs from what GitHub has. */
+var SY=lsGet('ln-sync',null);
+var sy={running:false,again:false,timer:null,last:0,tried:0,state:'',err:''};
+var GH='https://api.github.com',SYFILE='notes.json';
+function syOn(){return !!(SY&&SY.repo&&SY.token)&&mode==='local'}
+function syText(){
+  if(sy.state==='err')return 'Sync failed: '+sy.err;
+  if(sy.state==='ok'&&sy.last)return 'Synced to GitHub '+new Date(sy.last).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+  return 'Syncing…';
+}
+function syShow(){
+  if(!syOn())return;
+  var el=$('#status');if(!el||Object.keys(dirty).length)return;
+  el.className='status'+(sy.state==='err'?' err':'');el.textContent=syText();el.title=sy.state==='err'?'Your notes are still saved in this browser. Open Sync with GitHub to check the connection.':'';
+}
+function syE(status,msg){var e=new Error(msg);e.status=status;return e}
+function gh(method,path,body,token){
+  var h={'Accept':'application/vnd.github+json','Authorization':'Bearer '+(token||SY.token),'X-GitHub-Api-Version':'2022-11-28'};
+  if(body)h['Content-Type']='application/json';
+  return fetch(GH+path,{method:method,headers:h,cache:'no-store',body:body?JSON.stringify(body):undefined}).then(function(res){
+    return res.text().then(function(t){var j=null;try{j=t?JSON.parse(t):null}catch(e){}return {status:res.status,ok:res.ok,json:j}});
+  },function(){throw syE(0,'offline or GitHub unreachable')});
+}
+function ghErr(r){
+  var m=(r.json&&r.json.message||'').toLowerCase();
+  if(r.status===401)return syE(401,'token rejected');
+  if(r.status===404)return syE(404,'repo not found');
+  if((r.status===403||r.status===429)&&m.indexOf('rate limit')>-1)return syE(r.status,'GitHub rate limit, will retry');
+  if(r.status===403)return syE(403,'no permission');
+  return syE(r.status,'GitHub error '+r.status);
+}
+function repoPath(repo){return '/repos/'+(repo||SY.repo).split('/').map(encodeURIComponent).join('/')}
+function b64dec(s){var bin=atob(String(s).replace(/\s/g,'')),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new TextDecoder().decode(u)}
+function b64enc(s){var u=new TextEncoder().encode(s),bin='';for(var i=0;i<u.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(bin)}
+function canon(v){
+  if(v===undefined)return 'null';
+  if(v===null||typeof v!=='object')return JSON.stringify(v);
+  if(Array.isArray(v))return '['+v.map(canon).join(',')+']';
+  return '{'+Object.keys(v).sort().filter(function(k){return v[k]!==undefined}).map(function(k){return JSON.stringify(k)+':'+canon(v[k])}).join(',')+'}';
+}
+function checkPrivate(repo,token){
+  return gh('GET',repoPath(repo),null,token).then(function(r){
+    if(!r.ok)throw ghErr(r);
+    if(!r.json||r.json.private!==true)throw syE(-1,'repo is public, so nothing was uploaded');
+    if(r.json.has_pages)throw syE(-2,'repo publishes a GitHub Pages site, so nothing was uploaded');
+    return r.json;
+  });
+}
+function getRemote(){
+  return gh('GET',repoPath()+'/contents/'+SYFILE).then(function(r){
+    if(r.status===404)return gh('GET',repoPath()).then(function(r2){if(!r2.ok)throw ghErr(r2);return null});
+    if(!r.ok)throw ghErr(r);
+    var j=r.json||{};
+    if(Array.isArray(j)||j.type!=='file')throw syE(0,SYFILE+' is not a file');
+    var p=j.encoding==='base64'&&j.content?Promise.resolve(j.content):!j.size?Promise.resolve(''):
+      gh('GET',repoPath()+'/git/blobs/'+j.sha).then(function(b){if(!b.ok)throw ghErr(b);return b.json.content});
+    return p.then(function(c){
+      var txt=c?b64dec(c):'',data;
+      try{data=txt.trim()?JSON.parse(txt):{}}catch(e){throw syE(0,SYFILE+' in the repo is not valid JSON')}
+      return {sha:j.sha,data:data&&typeof data==='object'?data:{}};
+    });
+  });
+}
+function stamp(o){return o?(o.updated||o.created||0):-1}
+function newer(x,y){
+  if(!x)return y;if(!y)return x;
+  var a=stamp(x),b=stamp(y);if(a!==b)return b>a?y:x;
+  return canon(y)>canon(x)?y:x; // same timestamp: pick deterministically so both devices agree
+}
+function mergeData(L,R,first){
+  R=R||{};
+  var tomb={};
+  [L.tomb||{},R.tomb||{}].forEach(function(t){Object.keys(t).forEach(function(k){if(!(tomb[k]>=t[k]))tomb[k]=t[k]})});
+  function mm(a,b){
+    a=a||{};b=b||{};var out={};
+    Object.keys(a).concat(Object.keys(b)).forEach(function(k){
+      if(k in out)return;
+      var w=newer(a[k],b[k]);if(!w)return;
+      if(tomb[k]!=null){if(tomb[k]>=stamp(w))return;delete tomb[k]} // edited after it was deleted elsewhere: keep it
+      out[k]=w;
+    });
+    return out;
+  }
+  var courses=mm(L.courses,R.courses),pages=mm(L.pages,R.pages);
+  // never orphan a surviving page: bring its course back if either side still has it
+  Object.keys(pages).forEach(function(id){
+    var cid=pages[id].course;
+    if(cid&&!courses[cid]){var c=newer((L.courses||{})[cid],(R.courses||{})[cid]);if(c){courses[cid]=c;delete tomb[cid]}}
+  });
+  var dl,dlUpd,lu=L.dlUpd||0,ru=R.dlUpd||0;
+  if(first&&R.dl){dl=Object.assign({},R.dl,L.dl||{});dlUpd=Date.now()} // first connect on this device: keep both lists
+  else if(ru>lu){dl=R.dl||{};dlUpd=ru}else{dl=L.dl||{};dlUpd=lu}
+  return {courses:courses,pages:pages,dl:dl,dlUpd:dlUpd,tomb:tomb};
+}
+function docFocused(){var a=document.activeElement;return !!(a&&a!==document.body&&$('#doc').contains(a))}
+function applyMerged(M){
+  var oldAll=canon({c:S.courses,p:S.pages}),oldDl=canon(S.dl),oldCur=canon(S.pages[S.cur]||null);
+  var keep=S.cur&&S.pages[S.cur]&&(docFocused()||dirty[S.cur]||busy[S.cur])?S.pages[S.cur]:null; // never touch what is being typed
+  S.courses=M.courses;S.pages=Object.assign({},M.pages);if(keep)S.pages[S.cur]=keep;
+  S.dl=M.dl;S.dlUpd=M.dlUpd;S.tomb=M.tomb;
+  writeLocal();
+  var dlCh=canon(S.dl)!==oldDl,allCh=canon({c:S.courses,p:S.pages})!==oldAll;
+  if(!dlCh&&!allCh)return;
+  if(!S.cur&&UI.last&&S.pages[UI.last]&&S.view==='notes')S.cur=UI.last;
+  renderTree();
+  if(S.view==='deadlines'){if(dlCh)renderDoc();return}
+  if(keep){renderCrumb();return}
+  if(S.cur&&!S.pages[S.cur])S.cur=null;
+  if(!S.cur||canon(S.pages[S.cur])!==oldCur)renderDoc();else renderCrumb();
+}
+function syncOnce(retries){
+  return getRemote().then(function(r){
+    var remote=r?r.data:null;
+    var M=mergeData({courses:S.courses,pages:S.pages,dl:S.dl,dlUpd:S.dlUpd,tomb:S.tomb},remote,!SY.joined);
+    var need=!r||canon({courses:remote.courses||{},pages:remote.pages||{},dl:remote.dl||{},dlUpd:remote.dlUpd||0,tomb:remote.tomb||{}})!==canon(M);
+    var file=need?JSON.stringify({courses:M.courses,pages:M.pages,dl:M.dl,dlUpd:M.dlUpd,tomb:M.tomb,savedAt:Date.now()},null,1):null;
+    applyMerged(M);
+    if(!need)return;
+    return checkPrivate().then(function(){
+      var body={message:'Sync notes',content:b64enc(file)};if(r)body.sha=r.sha;
+      return gh('PUT',repoPath()+'/contents/'+SYFILE,body);
+    }).then(function(p){
+      if(p.ok)return;
+      if((p.status===409||p.status===422)&&retries>0)return syncOnce(retries-1); // stale sha: pull, merge, retry once
+      throw ghErr(p);
+    });
+  });
+}
+function syncNow(){
+  if(!syOn())return;
+  clearTimeout(sy.timer);sy.timer=null;
+  if(sy.running){sy.again=true;return}
+  if(document.querySelector('#layer .ov')){sy.timer=setTimeout(syncNow,3000);return} // a dialog may hold references to notes
+  sy.running=true;sy.tried=Date.now();if(sy.state!=='err')sy.state='syncing';syShow();
+  syncOnce(1).then(function(){
+    sy.state='ok';sy.last=Date.now();
+    if(SY&&!SY.joined){SY.joined=true;lsSet('ln-sync',SY)}
+  },function(e){sy.state='err';sy.err=e&&e.message||'unknown error'}).then(function(){
+    sy.running=false;syShow();
+    if(sy.again){sy.again=false;syncSoon(500)}
+  });
+}
+function syncSoon(ms){
+  if(!syOn())return;
+  if(sy.state!=='err')sy.state='pending';
+  clearTimeout(sy.timer);sy.timer=setTimeout(syncNow,ms==null?2000:ms);
+}
+var syStarted=false;
+function syncStart(){
+  if(syStarted||!syOn())return;syStarted=true;
+  syncNow();
+  setInterval(function(){if(!sy.timer)syncNow()},45000);
+  var wake=function(){if(document.visibilityState==='visible'&&Date.now()-sy.tried>3000)syncNow()};
+  document.addEventListener('visibilitychange',wake);window.addEventListener('focus',wake);
+}
+function parseRepo(v){
+  v=String(v||'').trim().replace(/^https?:\/\/github\.com\//i,'').replace(/\.git$/i,'').replace(/\/+$/,'');
+  return /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(v)?v:'';
+}
+function syncDialog(){
+  if(SY&&SY.repo&&SY.token){
+    dlg('<h3>Sync with GitHub</h3><p>Connected to <b>'+esc(SY.repo)+'</b>. Notes save to '+SYFILE+' in that private repository about 2 seconds after you stop typing, and other devices pick them up within a minute.</p>'+
+      '<div class="note'+(sy.state==='err'?' err':'')+'" id="s_m">'+esc(syText())+'</div>'+
+      '<div class="row"><button class="btn sec" id="sd" style="margin-right:auto;color:var(--danger)">Disconnect</button><button class="btn sec" id="sn">Sync now</button><button class="btn" id="dx">Done</button></div>',function(close){
+      $('#dx').onclick=close;
+      $('#sn').onclick=function(){close();syncNow()};
+      $('#sd').onclick=function(){
+        close();clearTimeout(sy.timer);sy.timer=null;
+        try{localStorage.removeItem('ln-sync')}catch(e){}
+        SY=null;sy.state='';renderTree();setStatus('saved');toast('Disconnected. Notes stay in this browser.');
+      };
+    });
+    return;
+  }
+  dlg('<h3>Sync with GitHub</h3><p>Keep the same notes on every device by saving them to a private GitHub repository.</p>'+
+    '<ol class="steps"><li><a href="https://github.com/new" target="_blank" rel="noopener">Create a new repository</a> and set it to <b>Private</b>.</li>'+
+    '<li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create a fine-grained token</a>. Under Repository access choose <b>Only select repositories</b> and pick that repo. Under Permissions set <b>Contents</b> to <b>Read and write</b>.</li>'+
+    '<li>Paste both below. The token stays in this browser only.</li></ol>'+
+    '<div class="frm"><label>Repository<input class="field" id="s_r" placeholder="your-name/class-notes" autocomplete="off" spellcheck="false"></label>'+
+    '<label>Access token<input class="field" id="s_t" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false"></label></div>'+
+    '<div class="note" id="s_m"></div>'+
+    '<div class="row"><button class="btn sec" id="dx">Cancel</button><button class="btn" id="do">Connect</button></div>',function(close){
+    var msg=function(t,err){var m=$('#s_m');m.textContent=t;m.className='note'+(err?' err':'')};
+    var go=function(){
+      var repo=parseRepo($('#s_r').value),token=$('#s_t').value.trim();
+      if(!repo){msg('Enter the repository as owner/name, for example your-name/class-notes.',true);$('#s_r').focus();return}
+      if(!token){msg('Paste your access token.',true);$('#s_t').focus();return}
+      var b=$('#do');b.disabled=true;msg('Checking the repository…');
+      checkPrivate(repo,token).then(function(info){
+        SY={repo:info.full_name||repo,token:token};lsSet('ln-sync',SY);
+        close();renderTree();toast('Connected. Merging your notes with GitHub…');
+        if(syStarted)syncNow();else syncStart();
+      },function(e){
+        b.disabled=false;
+        msg(e.status===-1?'This repository is public, so it was not connected. Notes are only ever saved to a private repository. On GitHub open the repo’s Settings, scroll to Danger Zone and change visibility to Private, or use a different private repository.':
+          e.status===-2?'This repository publishes a GitHub Pages site, and Pages makes every file in it public, even in a private repo. Create a separate private repository just for your notes, for example class-notes-data.':
+          e.status===401?'GitHub rejected the token. Check that you copied all of it and that it has not expired.':
+          e.status===404?'Repository not found. Check the name, and that the token was given access to this repository.':
+          e.status===403?'The token does not have permission to read this repository.':
+          'Could not reach GitHub ('+e.message+'). Try again.',true);
+      });
+    };
+    $('#dx').onclick=close;$('#do').onclick=go;
+    ['#s_r','#s_t'].forEach(function(s){$(s).addEventListener('keydown',function(e){if(e.key==='Enter')go();if(e.key==='Escape')close()})});
+  });
+}
+$('#syncBtn').addEventListener('click',function(){$('#app').classList.remove('open');syncDialog()});
 
 /* ---------- sidebar ---------- */
 var CHEV='<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 1.5L7 5 3.5 8.5"/></svg>';
@@ -386,7 +605,8 @@ function renderTree(){
   });
   if(!h)h='<div class="none" style="padding-left:6px">'+(q?'No matches':'No courses yet')+'</div>';
   $('#tree').innerHTML=h;
-  $('#sfoot').textContent=mode==='db'?'Notes are private to you.':'Notes are saved in this browser only.';
+  $('#sfoot').textContent=mode==='db'?'Notes are private to you.':syOn()?'Notes sync to GitHub ('+SY.repo+').':'Notes are saved in this browser only.';
+  $('#syncBtn').hidden=mode==='db';
   $('#navDl').classList.toggle('on',S.view==='deadlines');
   updateBadge();
 }
@@ -1205,8 +1425,8 @@ function applySnapshot(snap){
 }
 function loadLocal(){
   var d=lsGet('ln-data',null);
-  if(d){S.courses=d.courses||{};S.pages=d.pages||{};S.dl=d.dl||{}}
-  mode='local';afterLoad();
+  if(d){S.courses=d.courses||{};S.pages=d.pages||{};S.dl=d.dl||{};S.dlUpd=d.dlUpd||0;S.tomb=d.tomb||{}}
+  mode='local';afterLoad();syncStart();
 }
 function boot(){
   renderTree();renderDoc();
