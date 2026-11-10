@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Lecture Notebook</title>
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Notebook">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -41,7 +45,8 @@ svg{display:block}
 .app{display:grid;grid-template-columns:280px minmax(0,1fr);height:100%}
 .side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;
   padding:14px 10px 12px max(16px,env(safe-area-inset-left,0px))}
-.brand{font:600 17px/1.2 var(--serif);padding:2px 6px 12px;letter-spacing:.1px}
+.brand{font:600 17px/1.2 var(--serif);padding:2px 6px 12px;letter-spacing:.1px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:36px;height:36px;flex:none;border-radius:9px;box-shadow:0 0 0 1px var(--line)}
 .brand small{display:block;font:500 11px/1.4 var(--sans);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
 .search input{width:100%;height:32px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;padding:0 10px;font:inherit}
 .search input::placeholder{color:var(--faint)}
@@ -254,7 +259,7 @@ textarea.txt::placeholder{color:var(--faint)}
 <body>
 <div class="app" id="app">
   <aside class="side" id="side" aria-label="Courses">
-    <div class="brand"><small>Class notes</small>Lecture Notebook</div>
+    <div class="brand"><img class="logo" src="favicon.svg" alt="FZ"><div><small>Class notes</small>Lecture Notebook</div></div>
     <div class="search"><input id="q" type="search" placeholder="Search all notes" autocomplete="off" aria-label="Search notes"></div>
     <button class="navbtn" id="navDl"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.8v2.5M10.5 1.8v2.5"/></svg>Deadlines &amp; calendar<span class="badge" id="dlBadge" hidden></span></button>
     <nav class="tree" id="tree"></nav>
