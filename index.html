@@ -185,6 +185,34 @@ textarea.txt::placeholder{color:var(--faint)}
 .dt{font:600 clamp(26px,4.5vw,34px)/1.15 var(--serif);margin:0}
 .dsum{color:var(--muted);font-size:14px;margin-top:4px}.dsum.over{color:var(--danger);font-weight:500}
 .dact{display:flex;gap:8px;flex-wrap:wrap}
+#navAp{margin-top:2px}#navAp svg{color:var(--accent)}
+.apaste{display:flex;gap:8px;align-items:flex-start}
+.apaste textarea{flex:1;min-width:0;min-height:44px;max-height:240px;resize:vertical;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:10px 12px;font:inherit;line-height:1.45}
+.apaste .btn{height:44px}
+#apMsg:empty{display:none}#apMsg.err,.note.err{color:var(--danger)}
+.afil{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 12px}
+.afc{padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;color:var(--muted);background:var(--bg)}
+.afc b{font-weight:600;margin-left:6px;color:var(--fg)}
+.afc.on{background:var(--accent-soft);color:var(--fg);border-color:var(--accent)}
+.atw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.atab{width:100%;border-collapse:collapse;font-size:13.5px;min-width:700px}
+.atab th{text-align:left;font:600 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+.atab th:hover{color:var(--fg)}
+.atab td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.atab tbody tr:last-child td{border-bottom:0}
+.atab tbody tr{cursor:pointer}.atab tbody tr:hover{background:var(--side)}
+.atab .co{font-weight:600}.atab .mu{color:var(--muted)}
+.atab small{color:var(--muted);font-size:12px}
+.adl.soon,.adl.soon small{color:var(--danger);font-weight:500}
+.ast{border:0;border-radius:999px;padding:4px 10px;font:500 12.5px var(--sans);color:var(--fg);cursor:pointer;-webkit-appearance:none;appearance:none}
+.st-saved{background:var(--hl-gray)}.st-applied{background:var(--hl-blue)}.st-oa{background:var(--hl-purple)}
+.st-interview{background:var(--hl-yellow)}.st-offer{background:var(--hl-green)}.st-rejected{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.alink{color:var(--accent);font-weight:600;text-decoration:none;font-size:16px;padding:2px 6px}
+.card.wide{width:min(620px,100%);max-height:calc(100vh - 32px);overflow:auto}
+.anotes{height:88px!important;padding:8px 10px!important;resize:vertical;line-height:1.45;font:inherit!important;font-size:14px!important;background:var(--bg)!important}
+.ajd summary{cursor:pointer;font-size:12px;font-weight:500;color:var(--muted)}
+.ajd textarea{margin-top:8px;height:200px}
+@media (max-width:640px){.frm .two{grid-template-columns:1fr}}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px}
 .tab{padding:8px 12px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
 .tab.on{color:var(--fg);border-color:var(--accent)}
@@ -262,6 +290,7 @@ textarea.txt::placeholder{color:var(--faint)}
     <div class="brand"><img class="logo" src="favicon.svg" alt="FZ"><div><small>Class notes</small>Lecture Notebook</div></div>
     <div class="search"><input id="q" type="search" placeholder="Search all notes" autocomplete="off" aria-label="Search notes"></div>
     <button class="navbtn" id="navDl"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.8v2.5M10.5 1.8v2.5"/></svg>Deadlines &amp; calendar<span class="badge" id="dlBadge" hidden></span></button>
+    <button class="navbtn" id="navAp"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4.5" width="12" height="9" rx="2"/><path d="M5.8 4.5V3.2c0-.6.5-1 1-1h2.4c.6 0 1 .4 1 1v1.3M2 8.5h12"/></svg>Internships<span class="badge" id="apBadge" hidden></span></button>
     <nav class="tree" id="tree"></nav>
     <button class="sbtn" id="newCourse"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 2v10M2 7h10"/></svg>New course</button>
     <button class="sbtn" id="syncBtn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5A5 5 0 0 0 3 4M2 8.5A5 5 0 0 0 11 10"/><path d="M3 1.5V4h2.5M11 12.5V10H8.5"/></svg>Sync with GitHub</button>
@@ -299,7 +328,7 @@ var TYPES=[
 function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
-var S={courses:{},pages:{},dl:{},dlUpd:0,tomb:{},cur:null,q:'',loaded:false,view:'notes',dtab:'list',month:{y:new Date().getFullYear(),m:new Date().getMonth()},sel:null};
+var S={courses:{},pages:{},apps:{},dl:{},dlUpd:0,tomb:{},cur:null,q:'',loaded:false,view:'notes',dtab:'list',month:{y:new Date().getFullYear(),m:new Date().getMonth()},sel:null};
 var UI=lsGet('ln-ui',{collapsed:{},last:null});
 var col=null, mode='local';
 var dragId=null;
@@ -357,15 +386,15 @@ function setStatus(k){
   else if(k==='saved'&&syOn()){syShow();return}
   el.textContent=m;el.title='';
 }
-function writeLocal(){lsSet('ln-data',{courses:S.courses,pages:S.pages,dl:S.dl,dlUpd:S.dlUpd||0,tomb:S.tomb||{}})}
+function writeLocal(){lsSet('ln-data',{courses:S.courses,pages:S.pages,apps:S.apps,dl:S.dl,dlUpd:S.dlUpd||0,tomb:S.tomb||{}})}
 function saveLocal(){writeLocal();syncSoon(1300)}
 function touch(id){
   var now=Date.now();
-  if(id==='dl')S.dlUpd=now;else if(S.courses[id])S.courses[id].updated=now;else if(S.pages[id])S.pages[id].updated=Math.max(S.pages[id].updated||0,now);
+  if(id==='dl')S.dlUpd=now;else if(S.courses[id])S.courses[id].updated=now;else if(S.pages[id])S.pages[id].updated=Math.max(S.pages[id].updated||0,now);else if(S.apps[id])S.apps[id].updated=now;
   dirty[id]=1;setStatus('saving');clearTimeout(timers[id]);timers[id]=setTimeout(function(){flush(id)},700)}
 function flush(id){
   if(busy[id]){timers[id]=setTimeout(function(){flush(id)},300);return}
-  var doc=id==='dl'?{type:'deadlines',items:S.dl}:(S.courses[id]||S.pages[id]);
+  var doc=id==='dl'?{type:'deadlines',items:S.dl}:(S.courses[id]||S.pages[id]||S.apps[id]);
   if(!doc){delete dirty[id];return}
   busy[id]=1;delete dirty[id];
   var done=function(ok){busy[id]=0;if(!ok){dirty[id]=1;setStatus('error')}else if(!Object.keys(dirty).length)setStatus('saved')};
@@ -465,7 +494,7 @@ function mergeData(L,R,first){
     });
     return out;
   }
-  var courses=mm(L.courses,R.courses),pages=mm(L.pages,R.pages);
+  var courses=mm(L.courses,R.courses),pages=mm(L.pages,R.pages),apps=mm(L.apps,R.apps);
   // never orphan a surviving page: bring its course back if either side still has it
   Object.keys(pages).forEach(function(id){
     var cid=pages[id].course;
@@ -474,16 +503,18 @@ function mergeData(L,R,first){
   var dl,dlUpd,lu=L.dlUpd||0,ru=R.dlUpd||0;
   if(first&&R.dl){dl=Object.assign({},R.dl,L.dl||{});dlUpd=Date.now()} // first connect on this device: keep both lists
   else if(ru>lu){dl=R.dl||{};dlUpd=ru}else{dl=L.dl||{};dlUpd=lu}
-  return {courses:courses,pages:pages,dl:dl,dlUpd:dlUpd,tomb:tomb};
+  return {courses:courses,pages:pages,apps:apps,dl:dl,dlUpd:dlUpd,tomb:tomb};
 }
 function docFocused(){var a=document.activeElement;return !!(a&&a!==document.body&&$('#doc').contains(a))}
 function applyMerged(M){
-  var oldAll=canon({c:S.courses,p:S.pages}),oldDl=canon(S.dl),oldCur=canon(S.pages[S.cur]||null);
+  var oldAll=canon({c:S.courses,p:S.pages}),oldDl=canon(S.dl),oldApps=canon(S.apps),oldCur=canon(S.pages[S.cur]||null);
   var keep=S.cur&&S.pages[S.cur]&&(docFocused()||dirty[S.cur]||busy[S.cur])?S.pages[S.cur]:null; // never touch what is being typed
-  S.courses=M.courses;S.pages=Object.assign({},M.pages);if(keep)S.pages[S.cur]=keep;
+  S.courses=M.courses;S.pages=Object.assign({},M.pages);if(keep)S.pages[S.cur]=keep;S.apps=M.apps;
   S.dl=M.dl;S.dlUpd=M.dlUpd;S.tomb=M.tomb;
   writeLocal();
-  var dlCh=canon(S.dl)!==oldDl,allCh=canon({c:S.courses,p:S.pages})!==oldAll;
+  var dlCh=canon(S.dl)!==oldDl,allCh=canon({c:S.courses,p:S.pages})!==oldAll,appsCh=canon(S.apps)!==oldApps;
+  if(appsCh)updateAppsBadge();
+  if(S.view==='apps'){if(appsCh&&!docFocused())renderApps();if(allCh)renderTree();return}
   if(!dlCh&&!allCh)return;
   if(!S.cur&&UI.last&&S.pages[UI.last]&&S.view==='notes')S.cur=UI.last;
   renderTree();
@@ -495,9 +526,9 @@ function applyMerged(M){
 function syncOnce(retries){
   return getRemote().then(function(r){
     var remote=r?r.data:null;
-    var M=mergeData({courses:S.courses,pages:S.pages,dl:S.dl,dlUpd:S.dlUpd,tomb:S.tomb},remote,!SY.joined);
-    var need=!r||canon({courses:remote.courses||{},pages:remote.pages||{},dl:remote.dl||{},dlUpd:remote.dlUpd||0,tomb:remote.tomb||{}})!==canon(M);
-    var file=need?JSON.stringify({courses:M.courses,pages:M.pages,dl:M.dl,dlUpd:M.dlUpd,tomb:M.tomb,savedAt:Date.now()},null,1):null;
+    var M=mergeData({courses:S.courses,pages:S.pages,apps:S.apps,dl:S.dl,dlUpd:S.dlUpd,tomb:S.tomb},remote,!SY.joined);
+    var need=!r||canon({courses:remote.courses||{},pages:remote.pages||{},apps:remote.apps||{},dl:remote.dl||{},dlUpd:remote.dlUpd||0,tomb:remote.tomb||{}})!==canon(M);
+    var file=need?JSON.stringify({courses:M.courses,pages:M.pages,apps:M.apps,dl:M.dl,dlUpd:M.dlUpd,tomb:M.tomb,savedAt:Date.now()},null,1):null;
     applyMerged(M);
     if(!need)return;
     return checkPrivate().then(function(){
@@ -785,6 +816,251 @@ $('#doc').addEventListener('beforeinput',function(e){
   e.preventDefault();histGo(e.inputType==='historyUndo'?-1:1);
 });
 
+/* ---------- internship tracker ----------
+   S.apps = {id: {type:'app', company, role, location, status, applied, deadline, url, pay, notes, jd, created, updated}}
+   Synced like pages (newest copy wins, deletions tombstoned). Paste a link or a job description to add one. */
+var AST=[{k:'saved',l:'To apply'},{k:'applied',l:'Applied'},{k:'oa',l:'Assessment'},{k:'interview',l:'Interviewing'},{k:'offer',l:'Offer'},{k:'rejected',l:'Rejected'}];
+var ACOLS=[{k:'company',l:'Company'},{k:'role',l:'Role'},{k:'location',l:'Location'},{k:'status',l:'Status'},{k:'applied',l:'Applied'},{k:'deadline',l:'Deadline'},{k:'link',l:''}];
+function astLabel(k){var s=AST.filter(function(x){return x.k===k})[0];return s?s.l:'To apply'}
+function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:''}
+function appDue(a){return a.deadline?new Date(a.deadline+'T23:59').getTime():0}
+function appUrgent(a){var d=appDue(a);return !!d&&a.status==='saved'&&d-Date.now()<3*864e5}
+function updateAppsBadge(){
+  var n=Object.keys(S.apps).filter(function(id){return appUrgent(S.apps[id])}).length,b=$('#apBadge');
+  if(b){b.textContent=n||'';b.hidden=!n}
+}
+function showApps(){S.view='apps';renderTree();renderDoc();$('#app').classList.remove('open')}
+function appList(){
+  var f=UI.af||'all',so=UI.as||{k:'created',d:-1},order={};AST.forEach(function(s,i){order[s.k]=i});
+  var l=Object.keys(S.apps).map(function(id){var o=Object.assign({},S.apps[id]);o.id=id;return o});
+  if(f!=='all')l=l.filter(function(a){return (a.status||'saved')===f});
+  l.sort(function(a,b){
+    var k=so.k,x,y;
+    if(k==='status'){x=order[a.status||'saved'];y=order[b.status||'saved']}
+    else if(k==='created'){x=a.created||0;y=b.created||0}
+    else{x=String(a[k]||'').toLowerCase();y=String(b[k]||'').toLowerCase();if(!x&&y)return 1;if(x&&!y)return -1}
+    return (x<y?-1:x>y?1:0)*so.d||(b.created||0)-(a.created||0);
+  });
+  return l;
+}
+function renderApps(){
+  var keep=$('#apIn')?$('#apIn').value:'',all=Object.keys(S.apps).map(function(k){return S.apps[k]});
+  var cnt={};all.forEach(function(a){var s=a.status||'saved';cnt[s]=(cnt[s]||0)+1});
+  var active=all.filter(function(a){return ['applied','oa','interview'].indexOf(a.status)>-1}).length,urg=all.filter(appUrgent).length;
+  var sum=!all.length?'Paste a job link or a job description below to start tracking.':
+    all.length+' saved · '+active+' in progress'+(cnt.offer?' · '+cnt.offer+' offer'+(cnt.offer>1?'s':''):'')+(urg?' · '+urg+' deadline'+(urg>1?'s':'')+' within 3 days':'');
+  var f=UI.af||'all',so=UI.as||{k:'created',d:-1};
+  var h='<div class="dh"><div><h2 class="dt">Internships</h2><div class="dsum'+(urg?' over':'')+'">'+esc(sum)+'</div></div>'+
+    '<div class="dact"><button class="btn sec" data-ap="new">Add manually</button></div></div>'+
+    '<div class="apaste"><textarea id="apIn" rows="2" placeholder="Paste a job link (it is read automatically) or the full job description, then press Add" aria-label="Job link or description"></textarea><button class="btn" data-ap="parse" id="apGo">Add</button></div>'+
+    '<div class="note" id="apMsg"></div>';
+  if(all.length){
+    h+='<div class="afil">'+[{k:'all',l:'All'}].concat(AST).map(function(s){
+      var n=s.k==='all'?all.length:(cnt[s.k]||0);
+      return '<button class="afc'+(f===s.k?' on':'')+'" data-ap="filter" data-v="'+s.k+'">'+esc(s.l)+'<b>'+n+'</b></button>';
+    }).join('')+'</div>';
+    var rows=appList().map(function(a){
+      var u=safeUrl(a.url),due=appDue(a),st=a.status||'saved';
+      var dd=a.deadline?esc(fmtDate(a.deadline))+(due&&['saved'].indexOf(st)>-1?'<small> · '+esc(relText(due))+'</small>':''):'';
+      return '<tr data-ap="edit" data-id="'+a.id+'"><td class="co">'+esc(a.company||'—')+'</td><td>'+esc(a.role||'')+'</td><td class="mu">'+esc(a.location||'')+'</td>'+
+        '<td><select class="ast st-'+st+'" data-ap="status" data-id="'+a.id+'" aria-label="Status">'+AST.map(function(s){return '<option value="'+s.k+'"'+(s.k===st?' selected':'')+'>'+esc(s.l)+'</option>'}).join('')+'</select></td>'+
+        '<td class="mu">'+(a.applied?esc(fmtDate(a.applied)):'')+'</td><td class="adl'+(appUrgent(a)?' soon':'')+'">'+dd+'</td>'+
+        '<td>'+(u?'<a class="alink" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" data-ap="link" title="Open posting">↗</a>':'')+'</td></tr>';
+    }).join('');
+    h+='<div class="atw"><table class="atab"><thead><tr>'+ACOLS.map(function(c){
+      if(c.k==='link')return '<th></th>';
+      return '<th data-ap="sort" data-v="'+c.k+'">'+esc(c.l)+(so.k===c.k?(so.d>0?' ↑':' ↓'):'')+'</th>';
+    }).join('')+'</tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="mu">Nothing with this status.</td></tr>')+'</tbody></table></div>';
+  }
+  $('#doc').innerHTML=h;
+  if(keep)$('#apIn').value=keep;
+  renderCrumb();updateAppsBadge();
+}
+function afterAppsChange(){updateAppsBadge();if(S.view==='apps')renderApps()}
+function saveApp(id,rec){
+  var now=Date.now(),old=S.apps[id];
+  S.apps[id]=Object.assign({type:'app',created:old?old.created:now},old||{},rec,{updated:now});
+  touch(id);afterAppsChange();
+}
+function deleteApp(id){delete S.apps[id];removeDoc(id);afterAppsChange()}
+function appDialog(id,draft,note){
+  var a=id?S.apps[id]:(draft||{}),st=a.status||'saved';
+  dlg('<h3>'+(id?'Edit application':'New application')+'</h3>'+(note?'<p>'+esc(note)+'</p>':'')+'<div class="frm">'+
+    '<div class="two"><label>Company<input class="field" id="f_co" value="'+esc(a.company||'')+'"></label><label>Role<input class="field" id="f_ro" value="'+esc(a.role||'')+'"></label></div>'+
+    '<div class="two"><label>Location<input class="field" id="f_lo" value="'+esc(a.location||'')+'"></label><label>Status<select class="field" id="f_st">'+AST.map(function(s){return '<option value="'+s.k+'"'+(s.k===st?' selected':'')+'>'+esc(s.l)+'</option>'}).join('')+'</select></label></div>'+
+    '<div class="two"><label>Applied on<input class="field" type="date" id="f_ap" value="'+esc(a.applied||'')+'"></label><label>Deadline<input class="field" type="date" id="f_dd" value="'+esc(a.deadline||'')+'"></label></div>'+
+    '<div class="two"><label>Link<input class="field" id="f_ur" value="'+esc(a.url||'')+'" placeholder="https://"></label><label>Pay<input class="field" id="f_pa" value="'+esc(a.pay||'')+'" placeholder="e.g. $45/hr"></label></div>'+
+    '<label>Notes<textarea class="field anotes" id="f_no" placeholder="Referral, recruiter, interview dates, questions…">'+esc(a.notes||'')+'</textarea></label>'+
+    (a.jd?'<details class="ajd"><summary>Job description</summary><textarea readonly id="f_jd"></textarea></details>':'')+
+    '</div><div class="row">'+(id?'<button class="btn sec" id="dd" style="margin-right:auto;color:var(--danger)">Delete</button>':'')+'<button class="btn sec" id="dx">Cancel</button><button class="btn" id="do">Save</button></div>',function(close){
+    var card=$('#layer .card');card.classList.add('wide');
+    if($('#f_jd'))$('#f_jd').value=a.jd;
+    $('#dx').onclick=close;
+    $('#f_st').onchange=function(){if(this.value!=='saved'&&!$('#f_ap').value)$('#f_ap').value=today()};
+    $('#do').onclick=function(){
+      var rec={company:$('#f_co').value.trim(),role:$('#f_ro').value.trim(),location:$('#f_lo').value.trim(),status:$('#f_st').value,
+        applied:$('#f_ap').value,deadline:$('#f_dd').value,url:$('#f_ur').value.trim(),pay:$('#f_pa').value.trim(),notes:$('#f_no').value};
+      if(!rec.company&&!rec.role){$('#f_co').focus();return}
+      if(!id&&a.jd)rec.jd=a.jd;
+      close();saveApp(id||'a_'+rid(),rec);
+    };
+    if($('#dd'))$('#dd').onclick=function(){
+      close();confirmBox('Delete this application?',(a.company||'')+(a.role?' · '+a.role:''),'Delete',function(){deleteApp(id)});
+    };
+    [ '#f_co','#f_ro','#f_lo','#f_ur','#f_pa'].forEach(function(s){$(s).addEventListener('keydown',function(e){if(e.key==='Enter')$('#do').click();if(e.key==='Escape')close()})});
+  });
+}
+/* ---- parsing ---- */
+var JUNK_HOST=/(^|\.)(linkedin|indeed|glassdoor|handshake|joinhandshake|greenhouse|lever|ashbyhq|smartrecruiters|myworkdayjobs|workday|icims|jobvite|taleo|wellfound|simplify|ziprecruiter|google|github|notion|careers|jobs)$/i;
+function pretty(slug){return String(slug||'').replace(/[-_]+/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase()}).trim()}
+function hostCompany(u){
+  try{var h=new URL(u).hostname.replace(/^www\./,'').split('.');}catch(e){return ''}
+  if(/myworkdayjobs|workdayjobs/.test(h.join('.')))return pretty(h[0]); // tenant.wd5.myworkdayjobs.com
+  if(h.length<2)return '';
+  var name=h[h.length-2];if(['co','com','org','ac'].indexOf(name)>-1&&h.length>2)name=h[h.length-3];
+  return JUNK_HOST.test(name)?'':pretty(name);
+}
+function htmlText(html){
+  var d=new DOMParser().parseFromString('<div>'+String(html||'')+'</div>','text/html');
+  Array.prototype.forEach.call(d.querySelectorAll('p,li,br,h1,h2,h3,h4,div,tr'),function(n){n.insertAdjacentText('afterend','\n')});
+  return d.body.textContent.replace(/ /g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+function decodeEntities(s){var t=document.createElement('textarea');t.innerHTML=s;return t.value}
+var MON='jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec';
+function toYmd(s){
+  s=String(s).replace(/(\d)(st|nd|rd|th)\b/gi,'$1').replace(/\./g,'').trim();
+  var m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return m[1]+'-'+pad(+m[2])+'-'+pad(+m[3]);
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){var y=+m[3];if(y<100)y+=2000;return y+'-'+pad(+m[1])+'-'+pad(+m[2])}
+  var hasY=/\d{4}/.test(s),d=new Date(hasY?s:s+' '+new Date().getFullYear());
+  if(isNaN(d))return '';
+  if(!hasY&&d.getTime()<Date.now()-30*864e5)d.setFullYear(d.getFullYear()+1);
+  return ymd(d);
+}
+function parseJD(text,title,url){
+  text=String(text||'');var out={},lines=text.split(/\n+/).map(function(l){return l.replace(/^[#*\s>-]+|[*\s]+$/g,'').trim()}).filter(Boolean),head=lines.slice(0,40);
+  var t=String(title||'').trim(),m;
+  if(t){
+    if((m=t.match(/^Job Application for (.+?) at (.+)$/i))){out.role=m[1];out.company=m[2]}
+    else if((m=t.match(/^(.+?) (?:at|@) (.+?)(?:\s[|\-–]\s.*)?$/))){out.role=m[1];out.company=m[2]}
+    else{var seg=t.split(/\s[|\-–—]\s/).map(function(x){return x.trim()}).filter(function(x){return x&&!/^(linkedin|indeed|glassdoor|careers?|jobs?|job board|workday|handshake)$/i.test(x)&&!/careers at|job opportunities|jobs at/i.test(x)});
+      var term=seg.filter(function(x){return /^(?:(?:summer|fall|winter|spring)\s*)?20\d\d$/i.test(x)});
+      seg=seg.filter(function(x){return term.indexOf(x)<0&&!/^(?:jr|req|r)?[\d_-]{4,}$/i.test(x)});
+      if(seg.length){out.role=seg[0]+(term.length?' '+term[0]:'');if(seg[1])out.company=seg[1].replace(/^careers at /i,'')}}
+  }
+  var lab=function(re){for(var i=0;i<lines.length;i++){var x=lines[i].match(re);if(x&&x[1].trim())return x[1].trim()}return ''};
+  out.company=out.company||lab(/^(?:company|employer|organization)\s*[:\-]\s*(.{2,60})$/i);
+  out.role=out.role||lab(/^(?:job title|title|position|role)\s*[:\-]\s*(.{3,120})$/i);
+  if(!out.role)head.some(function(l){if(l.length<=110&&/\b(intern(ship)?|co-?op|new grad|apprentice|fellow(ship)?)\b/i.test(l)&&!/^(about|we|our|you|the|this|as an?)\b/i.test(l)){out.role=l;return true}});
+  if(!out.role)head.some(function(l){if(l.length<=80&&/\b(engineer|developer|analyst|designer|scientist|researcher|manager|associate|consultant)\b/i.test(l)&&!/[.:]$/.test(l)){out.role=l;return true}});
+  if(!out.company){
+    var cands=[/\bAbout ([A-Z][\w&.'’\-]*(?: [A-Z][\w&.'’\-]*){0,3})\s*$/m,/^([A-Z][\w&.'’\-]*(?: [A-Z][\w&.'’\-]*){0,3}) is (?:a|an|the|one|on|building|hiring)\b/m,/\b(?:at|join) ([A-Z][\w&.'’\-]*(?: [A-Z][\w&.'’\-]*){0,2})(?:[,.!]| we| you| is| as|\s*$)/m];
+    for(var i=0;i<cands.length&&!out.company;i++){var x=text.match(cands[i]);if(x&&!/^(The|This|Our|Us|You|We|Role|Team|Position|Job|Company|Summer|Fall|Winter|Spring)\b/.test(x[1]))out.company=x[1]}
+  }
+  out.company=out.company||hostCompany(url||'');
+  out.location=lab(/^(?:locations?|office|based in|work location)\s*[:\-]\s*(.{2,80})$/i);
+  if(!out.location){var cm=head.join('\n').match(/\b([A-Z][a-zA-Z.]+(?: [A-Z][a-zA-Z.]+)?, (?:[A-Z]{2}|[A-Z][a-z]+(?: [A-Z][a-z]+)?))\b/);if(cm)out.location=cm[1]}
+  var rm=text.match(/\b(Remote|Hybrid|On-?site)\b/i);
+  if(rm&&(!out.location||out.location.toLowerCase().indexOf(rm[1].toLowerCase())<0))out.location=(out.location?out.location+' · ':'')+pretty(rm[1].toLowerCase());
+  var dre=new RegExp('(?:apply by|deadline|applications? (?:close|closes|are due|due|will close|must be received)|closing date|due date|apply before|submit[^.\\n]{0,40}?by)[^.\\n]{0,30}?((?:'+MON+')[a-z]*\\.? \\d{1,2}(?:st|nd|rd|th)?(?:,? \\d{4})?|\\d{1,2}/\\d{1,2}/\\d{2,4}|\\d{4}-\\d{2}-\\d{2})','i');
+  var dm=text.match(dre);if(dm)out.deadline=toYmd(dm[1]);
+  /* pay: only from lines about pay, so benefit amounts ("HRA up to $10,000 per year") are ignored */
+  var PAYRE=/\$\s?\d[\d,]*(?:\.\d+)?k?(?:\s?(?:-|–|to)\s?\$?\s?\d[\d,]*(?:\.\d+)?k?)?(?:\s?(?:usd|\/|per|an|a)\s?)*\s?(?:hr|hour|hourly|year|yr|annually|annual|month|monthly|mo|week|wk)?\b/i;
+  var payIdx=-1;text.split(/\n+/).some(function(l,i,arr){
+    if(/\b(compensation|salary|pay|wage|hourly|base|stipend|rate)\b/i.test(l)&&!/\b(hra|401|fertility|reimburse|bonus|equity|relocation|stipends? for|allowance)\b/i.test(l)){
+      var x=(l+' '+(arr[i+1]||'')).match(PAYRE);if(x&&/\d{2}/.test(x[0])){out.pay=x[0].replace(/\s+/g,' ').trim();return true}}
+  });
+  var sm=text.match(/\b(Summer|Fall|Winter|Spring) (20\d\d)\b/);if(sm&&out.role&&out.role.indexOf(sm[0])<0&&out.role.length<70)out.role+=' ('+sm[0]+')';
+  ['role','company','location'].forEach(function(k){if(out[k])out[k]=out[k].replace(/\s+/g,' ').replace(/[|·•,;:\-–]+$/,'').trim().slice(0,120)});
+  out.jd=text.slice(0,30000);
+  return out;
+}
+function getJSON(url,opts){
+  var ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(function(){ac.abort()},15000):0;
+  return fetch(url,Object.assign({signal:ac&&ac.signal,cache:'no-store'},opts||{})).then(function(r){clearTimeout(tm);if(!r.ok)throw new Error('http '+r.status);return r.json()});
+}
+function readLink(u){
+  var url=new URL(u),h=url.hostname.replace(/^www\./,''),p=url.pathname.split('/').filter(Boolean),q=url.searchParams,fin=function(o,src){o.url=u;o.source=src;return o};
+  var withText=function(base,text,src){var x=parseJD(text,'',u);Object.keys(base).forEach(function(k){if(base[k])x[k]=base[k]});x.jd=text.slice(0,30000);return fin(x,src)};
+  // Greenhouse (board pages, embeds, or company sites that pass gh_jid)
+  var ghB=null,ghId=null;
+  if(/greenhouse\.io$/.test(h)){if(q.get('for')){ghB=q.get('for');ghId=q.get('token')||q.get('gh_jid')}else if(p[1]==='jobs'){ghB=p[0];ghId=p[2]}}
+  else if(q.get('gh_jid')){ghId=q.get('gh_jid');ghB=hostCompany(u).toLowerCase().replace(/\s+/g,'')}
+  if(ghB&&ghId)return getJSON('https://boards-api.greenhouse.io/v1/boards/'+encodeURIComponent(ghB)+'/jobs/'+encodeURIComponent(ghId)).then(function(j){
+    return withText({role:j.title,company:j.company_name||pretty(ghB),location:j.location&&j.location.name},htmlText(decodeEntities(j.content||'')),'Greenhouse');
+  }).catch(function(){return readAny(u)});
+  if(/(^|\.)lever\.co$/.test(h)&&p.length>=2)return getJSON('https://api.lever.co/v0/postings/'+encodeURIComponent(p[0])+'/'+encodeURIComponent(p[1])).then(function(j){
+    var txt=[j.descriptionPlain].concat((j.lists||[]).map(function(l){return l.text+'\n'+htmlText(l.content)}),[j.additionalPlain]).filter(Boolean).join('\n\n');
+    return withText({role:j.text,company:pretty(p[0]),location:j.categories&&j.categories.location},txt,'Lever');
+  }).catch(function(){return readAny(u)});
+  if(/ashbyhq\.com$/.test(h)&&p.length>=2)return getJSON('https://api.ashbyhq.com/posting-api/job-board/'+encodeURIComponent(p[0])+'?includeCompensation=true').then(function(j){
+    var job=(j.jobs||[]).filter(function(x){return x.id===p[1]})[0];if(!job)throw new Error('not found');
+    return withText({role:job.title,company:pretty(p[0]),location:job.location,pay:job.compensation&&job.compensation.compensationTierSummary},job.descriptionPlain||htmlText(job.descriptionHtml),'Ashby');
+  }).catch(function(){return readAny(u)});
+  if(/smartrecruiters\.com$/.test(h)&&p.length>=2)return getJSON('https://api.smartrecruiters.com/v1/companies/'+encodeURIComponent(p[0])+'/postings/'+encodeURIComponent(p[1].split('-')[0])).then(function(j){
+    var sec=(j.jobAd&&j.jobAd.sections)||{},loc=j.location||{};
+    var txt=['companyDescription','jobDescription','qualifications','additionalInformation'].map(function(k){return sec[k]?(sec[k].title||'')+'\n'+htmlText(sec[k].text):''}).filter(Boolean).join('\n\n');
+    return withText({role:j.name,company:j.company&&j.company.name,location:[loc.city,loc.region].filter(Boolean).join(', ')+(loc.remote?' · Remote':'')},txt,'SmartRecruiters');
+  }).catch(function(){return readAny(u)});
+  return readAny(u);
+}
+/* any other site: read the page text through the r.jina.ai reader (sites like Workday block direct reads) */
+function readAny(u){
+  return getJSON('https://r.jina.ai/'+u,{headers:{'Accept':'application/json'}}).then(function(j){
+    var d=j.data||{},txt=String(d.content||'');
+    if(txt.length<200||/sign in|log in to|join now to see|enable javascript/i.test(txt.slice(0,400))&&txt.length<1500)throw new Error('blocked');
+    var o=parseJD(txt,d.title||'',u);o.url=u;o.source='page';
+    var wl=u.match(/myworkdayjobs\.com\/(?:[a-z]{2}-[A-Z]{2}\/)?[^/]+\/job\/([^/]+)\//); // Workday puts the location in the link
+    if(wl&&!o.location){var L=decodeURIComponent(wl[1]),us=L.match(/^US-([A-Z]{2})-(.+)$/);o.location=us?us[2].replace(/-/g,' ')+', '+us[1]:L.replace('-',', ').replace(/-/g,' ')}
+    return o;
+  });
+}
+function addFromInput(){
+  var el=$('#apIn'),v=(el.value||'').trim(),msg=$('#apMsg'),btn=$('#apGo');
+  if(!v){el.focus();return}
+  var isUrl=/^https?:\/\/\S+$/i.test(v);
+  if(isUrl){
+    var dup=Object.keys(S.apps).filter(function(id){return S.apps[id].url===v})[0];
+    if(dup){el.value='';msg.textContent='That posting is already in your tracker.';appDialog(dup);return}
+    msg.className='note';msg.textContent='Reading the posting…';btn.disabled=true;
+    readLink(v).then(function(o){
+      btn.disabled=false;msg.textContent='';el.value='';
+      appDialog(null,Object.assign({status:'saved'},o),'Read from '+(o.source==='page'?'the job page':o.source)+'. Check the details, then save.');
+    },function(){
+      btn.disabled=false;el.value='';
+      msg.className='note err';msg.textContent='Couldn’t read that page (it may need a login). Paste the job description text here instead, or fill it in by hand.';
+      appDialog(null,{status:'saved',url:v,company:hostCompany(v)},'Couldn’t read that page automatically. Fill in what you know.');
+    });
+    return;
+  }
+  var o=parseJD(v,'','');el.value='';msg.textContent='';
+  appDialog(null,Object.assign({status:'saved'},o),'Filled in from the description. Check the details, then save.');
+}
+$('#doc').addEventListener('click',function(e){
+  if(S.view!=='apps')return;
+  var t=e.target.closest('[data-ap]');if(!t)return;
+  var a=t.dataset.ap;
+  if(a==='link'||a==='status')return;
+  if(a==='new')appDialog(null,{status:'saved'});
+  else if(a==='parse')addFromInput();
+  else if(a==='filter'){UI.af=t.dataset.v;lsSet('ln-ui',UI);renderApps()}
+  else if(a==='sort'){var k=t.dataset.v,so=UI.as||{k:'created',d:-1};UI.as={k:k,d:so.k===k?-so.d:1};lsSet('ln-ui',UI);renderApps()}
+  else if(a==='edit')appDialog(t.dataset.id);
+});
+$('#doc').addEventListener('change',function(e){
+  if(S.view!=='apps'||!e.target.matches('select[data-ap="status"]'))return;
+  var id=e.target.dataset.id,a=S.apps[id];if(!a)return;
+  var rec={status:e.target.value};if(rec.status!=='saved'&&!a.applied)rec.applied=today();
+  saveApp(id,rec);
+});
+$('#doc').addEventListener('paste',function(e){
+  if(S.view!=='apps'||e.target.id!=='apIn')return;
+  setTimeout(function(){var v=$('#apIn').value.trim();if(/^https?:\/\/\S+$/i.test(v))addFromInput()},0); // a pasted link is read right away
+});
+$('#doc').addEventListener('keydown',function(e){
+  if(S.view==='apps'&&e.target.id==='apIn'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey||/^https?:\/\/\S+$/i.test(e.target.value.trim()))){e.preventDefault();addFromInput()}
+});
+$('#navAp').addEventListener('click',showApps);
+
 /* ---------- sidebar ---------- */
 var CHEV='<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 1.5L7 5 3.5 8.5"/></svg>';
 function pageMatches(p,q){return (p.title||'').toLowerCase().indexOf(q)>-1||p.blocks.some(function(b){return textOf(b.x).toLowerCase().indexOf(q)>-1})}
@@ -812,11 +1088,12 @@ function renderTree(){
   $('#tree').innerHTML=h;
   $('#sfoot').textContent=mode==='db'?'Notes are private to you.':syOn()?'Notes sync to GitHub ('+SY.repo+').':'Notes are saved in this browser only.';
   $('#syncBtn').hidden=mode==='db';
-  $('#navDl').classList.toggle('on',S.view==='deadlines');
-  updateBadge();
+  $('#navDl').classList.toggle('on',S.view==='deadlines');$('#navAp').classList.toggle('on',S.view==='apps');
+  updateBadge();updateAppsBadge();
 }
 function renderCrumb(){
   var p=cp(),el=$('#crumb');
+  if(S.view==='apps'){el.innerHTML='<b>Internships</b>';$('#copyMd').hidden=true;$('#delPage').hidden=true;return}
   if(S.view==='deadlines'){el.innerHTML='<b>Deadlines &amp; calendar</b>';$('#copyMd').hidden=true;$('#delPage').hidden=true;return}
   if(!p){el.textContent='';$('#copyMd').hidden=true;$('#delPage').hidden=true;return}
   var c=S.courses[p.course];
@@ -834,9 +1111,10 @@ function openPage(id){
 function renderDoc(){
   closePop();
   var doc=$('#doc');
-  doc.className='doc'+(S.view==='deadlines'?' wide':'');
+  doc.className='doc'+(S.view==='deadlines'||S.view==='apps'?' wide':'');
   if(!S.loaded){doc.innerHTML='<div class="empty"><p>Loading your notes…</p></div>';renderCrumb();return}
   if(S.view==='deadlines'){renderDeadlines();return}
+  if(S.view==='apps'){renderApps();return}
   var cids=Object.keys(S.courses);
   if(!cids.length){
     S.cur=null;renderCrumb();
@@ -1642,15 +1920,17 @@ function applySnapshot(snap){
     if(!v||dirty[id]||busy[id])return;
     if(v.type==='deadlines'){S.dl=v.items||{};dlChanged=true}
     else if(v.type==='course'){S.courses[id]=v}
+    else if(v.type==='app'){S.apps[id]=v}
     else if(v.type==='page'){
       var old=S.pages[id];
       if(old&&(old.updated||0)>=(v.updated||0))return;
       S.pages[id]=v;if(id===S.cur)curChanged=true;
     }
   });
-  Object.keys(S.courses).concat(Object.keys(S.pages)).forEach(function(id){
+  Object.keys(S.courses).concat(Object.keys(S.pages),Object.keys(S.apps)).forEach(function(id){
     if(!seen[id]&&!dirty[id]&&!busy[id]){
-      if(S.courses[id]){delete S.courses[id]}
+      if(S.apps[id]){delete S.apps[id]}
+      else if(S.courses[id]){delete S.courses[id]}
       else if(S.pages[id]){delete S.pages[id];if(id===S.cur){S.cur=null;curChanged=true}}
     }
   });
@@ -1666,7 +1946,7 @@ function applySnapshot(snap){
 }
 function loadLocal(){
   var d=lsGet('ln-data',null);
-  if(d){S.courses=d.courses||{};S.pages=d.pages||{};S.dl=d.dl||{};S.dlUpd=d.dlUpd||0;S.tomb=d.tomb||{}}
+  if(d){S.courses=d.courses||{};S.pages=d.pages||{};S.apps=d.apps||{};S.dl=d.dl||{};S.dlUpd=d.dlUpd||0;S.tomb=d.tomb||{}}
   mode='local';afterLoad();syncStart();
 }
 function boot(){
