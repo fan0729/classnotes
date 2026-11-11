@@ -208,6 +208,8 @@ textarea.txt::placeholder{color:var(--faint)}
 .apaste .btn{height:44px}
 #apMsg:empty{display:none}#apMsg.err,.note.err{color:var(--danger)}
 .afil{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 12px}
+.aq{margin-left:auto;height:30px;min-width:200px;flex:0 1 260px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:999px;padding:0 12px;font:inherit;font-size:13px}
+@media (max-width:640px){.aq{flex:1 1 100%;margin-left:0}}
 .afc{padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;color:var(--muted);background:var(--bg)}
 .afc b{font-weight:600;margin-left:6px;color:var(--fg)}
 .afc.on{background:var(--accent-soft);color:var(--fg);border-color:var(--accent)}
@@ -347,6 +349,10 @@ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
 var S={courses:{},pages:{},apps:{},dl:{},dlUpd:0,tomb:{},cur:null,q:'',loaded:false,view:'notes',dtab:'list',month:{y:new Date().getFullYear(),m:new Date().getMonth()},sel:null};
 var UI=lsGet('ln-ui',{collapsed:{},last:null});
+/* reopen the view you were on (a note, Deadlines or Internships) after a refresh */
+if(UI.view==='deadlines'||UI.view==='apps')S.view=UI.view;
+if(UI.dtab==='cal')S.dtab='cal';
+function setView(v){S.view=v;UI.view=v;lsSet('ln-ui',UI)}
 var col=null, mode='local';
 var dragId=null;
 
@@ -846,11 +852,13 @@ function updateAppsBadge(){
   var n=Object.keys(S.apps).filter(function(id){return appUrgent(S.apps[id])}).length,b=$('#apBadge');
   if(b){b.textContent=n||'';b.hidden=!n}
 }
-function showApps(){S.view='apps';renderTree();renderDoc();$('#app').classList.remove('open')}
+function showApps(){setView('apps');renderTree();renderDoc();$('#app').classList.remove('open')}
 function appList(){
   var f=UI.af||'all',so=UI.as||{k:'created',d:-1},order={};AST.forEach(function(s,i){order[s.k]=i});
   var l=Object.keys(S.apps).map(function(id){var o=Object.assign({},S.apps[id]);o.id=id;return o});
   if(f!=='all')l=l.filter(function(a){return (a.status||'saved')===f});
+  var q=String(S.aq||'').trim().toLowerCase();
+  if(q)l=l.filter(function(a){return [a.company,a.role,a.industry,a.location,a.notes,a.pay].some(function(x){return String(x||'').toLowerCase().indexOf(q)>-1})});
   l.sort(function(a,b){
     var k=so.k,x,y;
     if(k==='status'){x=order[a.status||'saved'];y=order[b.status||'saved']}
@@ -877,7 +885,7 @@ function renderApps(){
     h+='<div class="afil">'+[{k:'all',l:'All'}].concat(AST).map(function(s){
       var n=s.k==='all'?all.length:(cnt[s.k]||0);
       return '<button class="afc'+(f===s.k?' on':'')+'" data-ap="filter" data-v="'+s.k+'">'+esc(s.l)+'<b>'+n+'</b></button>';
-    }).join('')+'</div>';
+    }).join('')+'<input id="apQ" class="aq" type="search" placeholder="Search company, role, industry…" autocomplete="off" aria-label="Search applications" value="'+esc(S.aq||'')+'"></div>';
     var rows=appList().map(function(a){
       var u=safeUrl(a.url),due=appDue(a),st=a.status||'saved';
       var dd=a.deadline?esc(fmtDate(a.deadline))+(due&&['saved'].indexOf(st)>-1?'<small> · '+esc(relText(due))+'</small>':''):'';
@@ -889,7 +897,7 @@ function renderApps(){
     h+='<div class="atw"><table class="atab"><thead><tr>'+ACOLS.map(function(c){
       if(c.k==='link')return '<th></th>';
       return '<th data-ap="sort" data-v="'+c.k+'">'+esc(c.l)+(so.k===c.k?(so.d>0?' ↑':' ↓'):'')+'</th>';
-    }).join('')+'</tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="mu">Nothing with this status.</td></tr>')+'</tbody></table></div>';
+    }).join('')+'</tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="mu">'+(S.aq&&S.aq.trim()?'No applications match “'+esc(S.aq.trim())+'”.':'Nothing with this status.')+'</td></tr>')+'</tbody></table></div>';
   }
   $('#doc').innerHTML=h;
   if(keep)$('#apIn').value=keep;
@@ -1168,6 +1176,14 @@ $('#doc').addEventListener('click',function(e){
   else if(a==='sort'){var k=t.dataset.v,so=UI.as||{k:'created',d:-1};UI.as={k:k,d:so.k===k?-so.d:1};lsSet('ln-ui',UI);renderApps()}
   else if(a==='edit')appDialog(t.dataset.id);
 });
+$('#doc').addEventListener('input',function(e){
+  if(S.view!=='apps'||e.target.id!=='apQ')return;
+  var pos=e.target.selectionStart;S.aq=e.target.value;renderApps(); // redraw the table, keep typing in the box
+  var n=$('#apQ');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}
+});
+$('#doc').addEventListener('keydown',function(e){
+  if(S.view==='apps'&&e.target.id==='apQ'&&e.key==='Escape'&&e.target.value){e.preventDefault();S.aq='';renderApps();$('#apQ').focus()}
+});
 $('#doc').addEventListener('change',function(e){
   if(S.view!=='apps'||!e.target.matches('select[data-ap="status"]'))return;
   var id=e.target.dataset.id,a=S.apps[id];if(!a)return;
@@ -1279,7 +1295,7 @@ function renderCrumb(){
 /* ---------- document ---------- */
 function templateBlocks(){return [mk('h2','Key ideas'),mk('ul'),mk('h2','Notes'),mk('p'),mk('h2','Questions'),mk('ul'),mk('h2','To review'),mk('todo')]}
 function openPage(id){
-  S.cur=id;S.view='notes';UI.last=id;lsSet('ln-ui',UI);
+  S.cur=id;S.view='notes';UI.view='notes';UI.last=id;lsSet('ln-ui',UI);
   renderTree();renderDoc();
   $('#app').classList.remove('open');
 }
@@ -1588,7 +1604,7 @@ function updateBadge(){
   el.innerHTML='<b>'+esc(nx.title)+'</b> · '+esc(relText(dms(nx)));
 }
 function showDeadlines(){
-  S.view='deadlines';
+  setView('deadlines');
   renderTree();renderDoc();
   $('#app').classList.remove('open');
 }
@@ -1751,7 +1767,7 @@ $('#doc').addEventListener('click',function(e){
   var a=t.dataset.dl,id=t.dataset.id;
   if(a==='add')dlDialog(null,S.dtab==='cal'&&S.sel?S.sel:today());
   else if(a==='import')importDialog();
-  else if(a==='tab'){S.dtab=t.dataset.v;renderDeadlines()}
+  else if(a==='tab'){S.dtab=t.dataset.v;UI.dtab=S.dtab;lsSet('ln-ui',UI);renderDeadlines()}
   else if(a==='edit'){if(id.indexOf('app:')===0)appDialog(id.slice(4));else dlDialog(id)}
   else if(a==='toggle'){
     if(id.indexOf('app:')===0){var ap=S.apps[id.slice(4)];if(ap){var nowApplied=(ap.status||'saved')==='saved';saveApp(id.slice(4),nowApplied?{status:'applied',applied:ap.applied||today()}:{status:'saved'});toast(nowApplied?'Marked as applied':'Moved back to To apply')}return}
