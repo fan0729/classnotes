@@ -212,7 +212,7 @@ textarea.txt::placeholder{color:var(--faint)}
 .afc b{font-weight:600;margin-left:6px;color:var(--fg)}
 .afc.on{background:var(--accent-soft);color:var(--fg);border-color:var(--accent)}
 .atw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
-.atab{width:100%;border-collapse:collapse;font-size:13.5px;min-width:700px}
+.atab{width:100%;border-collapse:collapse;font-size:13.5px;min-width:820px}
 .atab th{text-align:left;font:600 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
 .atab th:hover{color:var(--fg)}
 .atab td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -837,7 +837,7 @@ $('#doc').addEventListener('beforeinput',function(e){
    S.apps = {id: {type:'app', company, role, location, status, applied, deadline, url, pay, notes, jd, created, updated}}
    Synced like pages (newest copy wins, deletions tombstoned). Paste a link or a job description to add one. */
 var AST=[{k:'saved',l:'To apply'},{k:'applied',l:'Applied'},{k:'oa',l:'Assessment'},{k:'interview',l:'Interviewing'},{k:'offer',l:'Offer'},{k:'rejected',l:'Rejected'}];
-var ACOLS=[{k:'company',l:'Company'},{k:'role',l:'Role'},{k:'location',l:'Location'},{k:'status',l:'Status'},{k:'applied',l:'Applied'},{k:'deadline',l:'Deadline'},{k:'link',l:''}];
+var ACOLS=[{k:'company',l:'Company'},{k:'role',l:'Role'},{k:'industry',l:'Industry'},{k:'location',l:'Location'},{k:'status',l:'Status'},{k:'applied',l:'Applied'},{k:'deadline',l:'Deadline'},{k:'link',l:''}];
 function astLabel(k){var s=AST.filter(function(x){return x.k===k})[0];return s?s.l:'To apply'}
 function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:''}
 function appDue(a){return a.deadline?new Date(a.deadline+'T23:59').getTime():0}
@@ -861,6 +861,7 @@ function appList(){
   return l;
 }
 function renderApps(){
+  migrateApps();
   var keep=$('#apIn')?$('#apIn').value:'',all=Object.keys(S.apps).map(function(k){return S.apps[k]});
   var cnt={};all.forEach(function(a){var s=a.status||'saved';cnt[s]=(cnt[s]||0)+1});
   var active=all.filter(function(a){return ['applied','oa','interview'].indexOf(a.status)>-1}).length,urg=all.filter(appUrgent).length;
@@ -880,7 +881,7 @@ function renderApps(){
     var rows=appList().map(function(a){
       var u=safeUrl(a.url),due=appDue(a),st=a.status||'saved';
       var dd=a.deadline?esc(fmtDate(a.deadline))+(due&&['saved'].indexOf(st)>-1?'<small> · '+esc(relText(due))+'</small>':''):'';
-      return '<tr data-ap="edit" data-id="'+a.id+'"><td class="co">'+esc(a.company||'—')+'</td><td>'+esc(a.role||'')+'</td><td class="mu">'+esc(a.location||'')+'</td>'+
+      return '<tr data-ap="edit" data-id="'+a.id+'"><td class="co">'+esc(a.company||'—')+'</td><td>'+esc(a.role||'')+'</td><td class="mu">'+esc(a.industry||'')+'</td><td class="mu">'+esc(a.location||'')+'</td>'+
         '<td><select class="ast st-'+st+'" data-ap="status" data-id="'+a.id+'" aria-label="Status">'+AST.map(function(s){return '<option value="'+s.k+'"'+(s.k===st?' selected':'')+'>'+esc(s.l)+'</option>'}).join('')+'</select></td>'+
         '<td class="mu">'+(a.applied?esc(fmtDate(a.applied)):'')+'</td><td class="adl'+(appUrgent(a)?' soon':'')+'">'+dd+'</td>'+
         '<td>'+(u?'<a class="alink" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" data-ap="link" title="Open posting">↗</a>':'')+'</td></tr>';
@@ -888,7 +889,7 @@ function renderApps(){
     h+='<div class="atw"><table class="atab"><thead><tr>'+ACOLS.map(function(c){
       if(c.k==='link')return '<th></th>';
       return '<th data-ap="sort" data-v="'+c.k+'">'+esc(c.l)+(so.k===c.k?(so.d>0?' ↑':' ↓'):'')+'</th>';
-    }).join('')+'</tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="mu">Nothing with this status.</td></tr>')+'</tbody></table></div>';
+    }).join('')+'</tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="mu">Nothing with this status.</td></tr>')+'</tbody></table></div>';
   }
   $('#doc').innerHTML=h;
   if(keep)$('#apIn').value=keep;
@@ -903,11 +904,16 @@ function saveApp(id,rec){
 function deleteApp(id){delete S.apps[id];removeDoc(id);afterAppsChange()}
 function appDialog(id,draft,note){
   var a=id?S.apps[id]:(draft||{}),st=a.status||'saved';
+  var ind=a.industry||guessIndustry(a.company,a.jd),used={};
+  Object.keys(S.apps).forEach(function(k){if(S.apps[k].industry)used[S.apps[k].industry]=1});
+  var indOpts=INDUSTRIES.concat(Object.keys(used).filter(function(x){return INDUSTRIES.indexOf(x)<0}).sort());
   dlg('<h3>'+(id?'Edit application':'New application')+'</h3>'+(note?'<p>'+esc(note)+'</p>':'')+'<div class="frm">'+
     '<div class="two"><label>Company<input class="field" id="f_co" value="'+esc(a.company||'')+'"></label><label>Role<input class="field" id="f_ro" value="'+esc(a.role||'')+'"></label></div>'+
-    '<div class="two"><label>Location<input class="field" id="f_lo" value="'+esc(a.location||'')+'"></label><label>Status<select class="field" id="f_st">'+AST.map(function(s){return '<option value="'+s.k+'"'+(s.k===st?' selected':'')+'>'+esc(s.l)+'</option>'}).join('')+'</select></label></div>'+
-    '<div class="two"><label>Applied on<input class="field" type="date" id="f_ap" value="'+esc(a.applied||'')+'"></label><label>Deadline<input class="field" type="date" id="f_dd" value="'+esc(a.deadline||'')+'"></label></div>'+
-    '<div class="two"><label>Link<input class="field" id="f_ur" value="'+esc(a.url||'')+'" placeholder="https://"></label><label>Pay<input class="field" id="f_pa" value="'+esc(a.pay||'')+'" placeholder="e.g. $45/hr"></label></div>'+
+    '<div class="two"><label>Industry<input class="field" id="f_in" list="indList" autocomplete="off" value="'+esc(ind)+'" placeholder="Start typing or pick one"></label><label>Location<input class="field" id="f_lo" value="'+esc(a.location||'')+'"></label></div>'+
+    '<datalist id="indList">'+indOpts.map(function(x){return '<option value="'+esc(x)+'">'}).join('')+'</datalist>'+
+    '<div class="two"><label>Status<select class="field" id="f_st">'+AST.map(function(s){return '<option value="'+s.k+'"'+(s.k===st?' selected':'')+'>'+esc(s.l)+'</option>'}).join('')+'</select></label><label>Applied on<input class="field" type="date" id="f_ap" value="'+esc(a.applied||'')+'"></label></div>'+
+    '<div class="two"><label>Deadline<input class="field" type="date" id="f_dd" value="'+esc(a.deadline||'')+'"></label><label>Pay<input class="field" id="f_pa" value="'+esc(a.pay||'')+'" placeholder="e.g. $45/hr"></label></div>'+
+    '<label>Link<input class="field" id="f_ur" value="'+esc(a.url||'')+'" placeholder="https://"></label>'+
     '<label>Notes<textarea class="field anotes" id="f_no" placeholder="Referral, recruiter, interview dates, questions…">'+esc(a.notes||'')+'</textarea></label>'+
     (a.jd?'<details class="ajd"><summary>Job description</summary><textarea readonly id="f_jd"></textarea></details>':'')+
     '</div><div class="row">'+(id?'<button class="btn sec" id="dd" style="margin-right:auto;color:var(--danger)">Delete</button>':'')+'<button class="btn sec" id="dx">Cancel</button><button class="btn" id="do">Save</button></div>',function(close){
@@ -916,7 +922,7 @@ function appDialog(id,draft,note){
     $('#dx').onclick=close;
     $('#f_st').onchange=function(){if(this.value!=='saved'&&!$('#f_ap').value)$('#f_ap').value=today()};
     $('#do').onclick=function(){
-      var rec={company:$('#f_co').value.trim(),role:$('#f_ro').value.trim(),location:$('#f_lo').value.trim(),status:$('#f_st').value,
+      var rec={company:$('#f_co').value.trim(),role:$('#f_ro').value.trim(),industry:$('#f_in').value.trim(),location:$('#f_lo').value.trim(),locv:1,status:$('#f_st').value,
         applied:$('#f_ap').value,deadline:$('#f_dd').value,url:$('#f_ur').value.trim(),pay:$('#f_pa').value.trim(),notes:$('#f_no').value};
       if(!rec.company&&!rec.role){$('#f_co').focus();return}
       if(!id&&a.jd)rec.jd=a.jd;
@@ -925,9 +931,109 @@ function appDialog(id,draft,note){
     if($('#dd'))$('#dd').onclick=function(){
       close();confirmBox('Delete this application?',(a.company||'')+(a.role?' · '+a.role:''),'Delete',function(){deleteApp(id)});
     };
-    [ '#f_co','#f_ro','#f_lo','#f_ur','#f_pa'].forEach(function(s){$(s).addEventListener('keydown',function(e){if(e.key==='Enter')$('#do').click();if(e.key==='Escape')close()})});
+    // suggest an industry when the company is typed and the field is still empty
+    $('#f_co').addEventListener('change',function(){if(!$('#f_in').value.trim())$('#f_in').value=guessIndustry(this.value,a.jd)});
+    [ '#f_co','#f_ro','#f_in','#f_lo','#f_ur','#f_pa'].forEach(function(s){$(s).addEventListener('keydown',function(e){if(e.key==='Enter')$('#do').click();if(e.key==='Escape')close()})});
   });
 }
+/* places: a location is only accepted when the part after the comma is a real state, province or country */
+var US_ST='AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC ON BC QC AB'.split(' ');
+var PLACE_NAMES='alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|georgia|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new jersey|new mexico|new york|north carolina|north dakota|ohio|oklahoma|oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|virginia|washington|west virginia|wisconsin|wyoming|district of columbia|ontario|british columbia|quebec|alberta|usa|us|united states|united states of america|canada|mexico|brazil|argentina|chile|colombia|uk|united kingdom|england|scotland|ireland|germany|france|spain|portugal|italy|netherlands|belgium|switzerland|austria|sweden|norway|denmark|finland|poland|czechia|czech republic|romania|greece|israel|turkey|uae|united arab emirates|india|china|hong kong|taiwan|japan|korea|south korea|singapore|malaysia|indonesia|philippines|vietnam|thailand|australia|new zealand|south africa|nigeria|kenya|egypt'.split('|');
+function isPlace(s){
+  s=String(s||'').trim().replace(/\.$/,'');
+  if(US_ST.indexOf(s)>-1)return true;
+  var l=s.toLowerCase();
+  return PLACE_NAMES.indexOf(l)>-1||PLACE_NAMES.indexOf(l.split(',').pop().trim())>-1;
+}
+var NOT_CITY=/^(at|in|for|with|and|or|the|our|your|about|data|science|computer|machine|master|masters|bachelor|phd|ai|ml|engineering|business|team|role|intern|internship|summer|fall|winter|spring|benefits|location|locations|remote|hybrid)$/i;
+function findLocation(lines,head,text){
+  var lab=function(re){for(var i=0;i<lines.length;i++){var x=lines[i].match(re);if(x&&x[1].trim())return x[1].trim()}return ''};
+  var loc=lab(/^(?:locations?|office|based in|work location|job location)\s*[:\-]\s*(.{2,80})$/i);
+  if(!loc)for(var i=0;i<lines.length-1;i++)if(/^(?:locations?|office|work location|job location)$/i.test(lines[i])&&lines[i+1].length<=80){loc=lines[i+1];break}
+  if(!loc){
+    var re=/\b([A-Z][a-zA-Z.'\-]+(?: [A-Z][a-zA-Z.'\-]+){0,2}), ((?:[A-Z]{2})|(?:[A-Z][a-z]+(?: [A-Z][a-z]+){0,3}))\b/g,m,src=head.join('\n');
+    while((m=re.exec(src))){var city=m[1].split(' ');if(!city.some(function(w){return NOT_CITY.test(w)})&&isPlace(m[2])){loc=m[1]+', '+m[2];break}}
+  }
+  var mode='';
+  head.some(function(l){if(l.length<=70){var r=l.match(/\b(remote|hybrid|on-?site|in-?office)\b/i);if(r&&!/\bnot\b|\bno\b/i.test(l)){var w=r[1].toLowerCase().replace(/[- ]/g,'');mode=w==='remote'?'Remote':w==='hybrid'?'Hybrid':'On-site';return true}}});
+  if(mode&&(!loc||loc.toLowerCase().indexOf(mode.toLowerCase())<0))loc=(loc?loc+' · ':'')+mode;
+  return loc;
+}
+/* saved locations that came from the old loose rule look like "Science, Master" - the part after the comma is not a place */
+function badOldLocation(s){
+  var m=String(s||'').match(/^([^,·]+), ([^,·]+?)(?: · .*)?$/);
+  return !!m&&!isPlace(m[2])&&!/^(remote|hybrid|on-site)$/i.test(m[2].trim());
+}
+/* industry: known companies first, then keywords in the job description */
+var INDUSTRIES=['Software & Internet','AI & Machine Learning','Fintech & Payments','Banking & Finance','Trading & Investment','Consulting','Semiconductors & Hardware','Networking & Telecom','Autonomous Vehicles & Automotive','Aerospace & Defense','Healthcare & Biotech','E-commerce & Retail','Social Media','Media & Entertainment','Gaming','Consumer Goods','Energy & Climate','Cybersecurity','Data & Analytics','Education','Government & Nonprofit','Real Estate','Logistics & Transportation','Travel & Hospitality'];
+var CO_IND={};
+/* phrase list (multi-word names kept whole) */
+(function(){
+  var L={'Software & Internet':['google','alphabet','microsoft','apple','amazon','oracle','salesforce','adobe','ibm','intuit','workday','servicenow','atlassian','notion','figma','airtable','slack','dropbox','zoom','asana','canva','shopify','twilio','cloudflare','datadog','snowflake','mongodb','hubspot','autodesk','vmware','sap','github','gitlab','vercel','retool','duolingo'],
+    'AI & Machine Learning':['openai','anthropic','deepmind','scale ai','cohere','hugging face','perplexity','mistral','databricks','runway'],
+    'Fintech & Payments':['stripe','ramp','plaid','brex','chime','robinhood','coinbase','square','block','paypal','affirm','klarna','mercury','rippling','sofi','marqeta'],
+    'Banking & Finance':['jpmorgan','jp morgan','jpmorgan chase','goldman sachs','morgan stanley','bank of america','citi','citigroup','wells fargo','capital one','american express','barclays','ubs','blackrock','fidelity','vanguard','charles schwab','visa','mastercard'],
+    'Trading & Investment':['jane street','citadel','citadel securities','two sigma','hudson river trading','optiver','imc','jump trading','de shaw','d. e. shaw','drw','susquehanna','sig','akuna','five rings','tower research','bridgewater'],
+    'Consulting':['mckinsey','bain','bcg','boston consulting group','deloitte','pwc','ey','kpmg','accenture','oliver wyman'],
+    'Semiconductors & Hardware':['nvidia','intel','amd','qualcomm','broadcom','texas instruments','micron','arm','applied materials','asml','tsmc','analog devices','marvell'],
+    'Networking & Telecom':['cisco','juniper','arista','verizon','at&t','t-mobile','comcast','ericsson','nokia'],
+    'Autonomous Vehicles & Automotive':['zoox','waymo','cruise','tesla','rivian','lucid','aurora','nuro','ford','gm','general motors','toyota'],
+    'Aerospace & Defense':['spacex','blue origin','boeing','lockheed martin','northrop grumman','raytheon','rtx','anduril','palantir'],
+    'Healthcare & Biotech':['pfizer','moderna','genentech','johnson & johnson','unitedhealth','unitedhealth group','kaiser permanente','cvs health','epic','illumina','medtronic'],
+    'E-commerce & Retail':['walmart','target','ebay','etsy','wayfair','instacart','doordash','costco'],
+    'Social Media':['meta','facebook','instagram','pinterest','snap','snapchat','tiktok','bytedance','reddit','linkedin','discord','twitter'],
+    'Media & Entertainment':['netflix','disney','the walt disney company','spotify','warner bros','nbcuniversal','paramount'],
+    'Gaming':['roblox','riot games','epic games','electronic arts','ea','activision','activision blizzard','unity','valve','nintendo'],
+    'Travel & Hospitality':['airbnb','uber','lyft','expedia','booking.com','marriott'],
+    'Cybersecurity':['crowdstrike','palo alto networks','okta','zscaler','fortinet']};
+  Object.keys(L).forEach(function(k){L[k].forEach(function(n){CO_IND[n]=k})});
+})();
+var IND_KW={
+  'AI & Machine Learning':/\b(machine learning|deep learning|large language models?|llms?|generative ai|artificial intelligence|neural networks?)\b/gi,
+  'Fintech & Payments':/\b(payments?|fintech|card issuing|money movement|banking platform|lending)\b/gi,
+  'Trading & Investment':/\b(trading|quantitative|hedge fund|market making|portfolio|alpha|securities)\b/gi,
+  'Banking & Finance':/\b(investment banking|wealth management|asset management|banking|financial services)\b/gi,
+  'Consulting':/\b(consulting|consultants?|client engagements?)\b/gi,
+  'Semiconductors & Hardware':/\b(semiconductors?|silicon|asic|fpga|chips?|rtl|verilog|dft|hardware)\b/gi,
+  'Networking & Telecom':/\b(networking|routers?|switches|telecom|5g|wireless)\b/gi,
+  'Autonomous Vehicles & Automotive':/\b(autonomous (?:vehicles?|driving)|self-driving|robotaxi|automotive|vehicles?|lidar)\b/gi,
+  'Aerospace & Defense':/\b(aerospace|defense|satellites?|spacecraft|rockets?|aircraft|national security)\b/gi,
+  'Healthcare & Biotech':/\b(healthcare|health care|patients?|clinical|biotech|pharma(?:ceutical)?|medical|drug discovery)\b/gi,
+  'E-commerce & Retail':/\b(e-?commerce|retail|shoppers?|merchants?|marketplace|grocery)\b/gi,
+  'Social Media':/\b(social (?:media|network)|creators?|pinners?|users? share|community platform)\b/gi,
+  'Media & Entertainment':/\b(streaming|entertainment|music|film|studios?|content creators?)\b/gi,
+  'Gaming':/\b(games?|gaming|players?|game engine)\b/gi,
+  'Energy & Climate':/\b(energy|climate|renewables?|solar|battery|batteries|carbon|grid)\b/gi,
+  'Cybersecurity':/\b(cyber ?security|threat detection|security operations|vulnerabilit(?:y|ies)|zero trust)\b/gi,
+  'Education':/\b(education|edtech|students|learning platform|teachers?)\b/gi,
+  'Logistics & Transportation':/\b(logistics|supply chain|freight|shipping|delivery network)\b/gi,
+  'Software & Internet':/\b(saas|cloud|software platform|developer tools?|apis?)\b/gi
+};
+function guessIndustry(company,jd){
+  var c=String(company||'').toLowerCase().replace(/,? (inc|llc|ltd|corp|corporation|co|technologies|technology|labs)\.?$/,'').trim();
+  if(CO_IND[c])return CO_IND[c];
+  var t=String(jd||'').slice(0,12000),best='',bs=0;
+  Object.keys(IND_KW).forEach(function(k){var n=(t.match(IND_KW[k])||[]).length;if(n>bs){bs=n;best=k}});
+  return bs>=3?best:'';
+}
+function cleanRole(r){return String(r||'').replace(/\s*[-–,(]?\s*\b(?:united states(?: of america)?|usa|us)\)?\s*$/i,'').trim()}
+/* one-time touch-ups for saved applications: fill industry, repair locations from the old loose rule */
+function migrateApps(){
+  Object.keys(S.apps).forEach(function(id){
+    var a=S.apps[id],ch={};
+    if(a.industry===undefined){ch.industry=guessIndustry(a.company,a.jd)}
+    if(!a.locv){
+      ch.locv=1;
+      var cr=cleanRole(a.role);if(cr!==a.role)ch.role=cr;
+      if(a.location&&badOldLocation(a.location)){
+        var lines=String(a.jd||'').split(/\n+/).map(function(l){return l.replace(/^[#*\s>-]+|[*\s]+$/g,'').trim()}).filter(Boolean);
+        ch.location=findLocation(lines,lines.slice(0,40),a.jd||'');
+      }
+    }
+    if(Object.keys(ch).length){Object.assign(a,ch);touch(id)}
+  });
+}
+
 /* ---- parsing ---- */
 var JUNK_HOST=/(^|\.)(linkedin|indeed|glassdoor|handshake|joinhandshake|greenhouse|lever|ashbyhq|smartrecruiters|myworkdayjobs|workday|icims|jobvite|taleo|wellfound|simplify|ziprecruiter|google|github|notion|careers|jobs)$/i;
 function pretty(slug){return String(slug||'').replace(/[-_]+/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase()}).trim()}
@@ -975,10 +1081,7 @@ function parseJD(text,title,url){
     for(var i=0;i<cands.length&&!out.company;i++){var x=text.match(cands[i]);if(x&&!/^(The|This|Our|Us|You|We|Role|Team|Position|Job|Company|Summer|Fall|Winter|Spring)\b/.test(x[1]))out.company=x[1]}
   }
   out.company=out.company||hostCompany(url||'');
-  out.location=lab(/^(?:locations?|office|based in|work location)\s*[:\-]\s*(.{2,80})$/i);
-  if(!out.location){var cm=head.join('\n').match(/\b([A-Z][a-zA-Z.]+(?: [A-Z][a-zA-Z.]+)?, (?:[A-Z]{2}|[A-Z][a-z]+(?: [A-Z][a-z]+)?))\b/);if(cm)out.location=cm[1]}
-  var rm=text.match(/\b(Remote|Hybrid|On-?site)\b/i);
-  if(rm&&(!out.location||out.location.toLowerCase().indexOf(rm[1].toLowerCase())<0))out.location=(out.location?out.location+' · ':'')+pretty(rm[1].toLowerCase());
+  out.location=findLocation(lines,head,text);
   var dre=new RegExp('(?:apply by|deadline|applications? (?:close|closes|are due|due|will close|must be received)|closing date|due date|apply before|submit[^.\\n]{0,40}?by)[^.\\n]{0,30}?((?:'+MON+')[a-z]*\\.? \\d{1,2}(?:st|nd|rd|th)?(?:,? \\d{4})?|\\d{1,2}/\\d{1,2}/\\d{2,4}|\\d{4}-\\d{2}-\\d{2})','i');
   var dm=text.match(dre);if(dm)out.deadline=toYmd(dm[1]);
   /* pay: only from lines about pay, so benefit amounts ("HRA up to $10,000 per year") are ignored */
@@ -988,6 +1091,7 @@ function parseJD(text,title,url){
       var x=(l+' '+(arr[i+1]||'')).match(PAYRE);if(x&&/\d{2}/.test(x[0])){out.pay=x[0].replace(/\s+/g,' ').trim();return true}}
   });
   var sm=text.match(/\b(Summer|Fall|Winter|Spring) (20\d\d)\b/);if(sm&&out.role&&out.role.indexOf(sm[0])<0&&out.role.length<70)out.role+=' ('+sm[0]+')';
+  if(out.role)out.role=cleanRole(out.role);
   ['role','company','location'].forEach(function(k){if(out[k])out[k]=out[k].replace(/\s+/g,' ').replace(/[|·•,;:\-–]+$/,'').trim().slice(0,120)});
   out.jd=text.slice(0,30000);
   return out;
