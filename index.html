@@ -186,6 +186,24 @@ textarea.txt::placeholder{color:var(--faint)}
 .dsum{color:var(--muted);font-size:14px;margin-top:4px}.dsum.over{color:var(--danger);font-weight:500}
 .dact{display:flex;gap:8px;flex-wrap:wrap}
 #navAp{margin-top:2px}#navAp svg{color:var(--accent)}
+#navJr{margin-top:2px}#navJr svg{color:var(--accent)}
+.crumbln{color:var(--muted);font:inherit;padding:0}.crumbln:hover{color:var(--fg);text-decoration:underline}
+.jtag{font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 10px}
+.jtools{display:flex;justify-content:flex-end;margin:0 0 14px}
+.jgrid{columns:3 260px;column-gap:14px}
+.jcard{display:block;width:100%;break-inside:avoid;margin:0 0 14px;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden;transition:box-shadow .15s,transform .15s}
+.jcard:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.jimg{display:block;position:relative;background:var(--side)}
+.jimg img{display:block;width:100%;height:auto;max-height:340px;object-fit:cover}
+.jimg.miss img{display:none}.jimg.miss{min-height:90px}
+.jn{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 8px}
+.jbody{display:block;padding:12px 14px 14px}
+.jdate{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.jtitle{display:block;font:600 18px/1.3 var(--serif);margin-top:4px}
+.jquote{display:block;font:italic 400 17px/1.45 var(--serif);border-left:3px solid var(--accent);padding-left:10px;margin-top:8px;color:var(--fg)}
+.jtext{display:block;font-size:13.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.jdrop{border:2px dashed var(--line);border-radius:14px;padding:46px 20px;text-align:center;color:var(--muted)}
+.doc.jover{outline:2px dashed var(--accent);outline-offset:6px;border-radius:12px}
 .astats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0 10px}
 @media (min-width:1180px){.astats{grid-template-columns:repeat(6,1fr)}}
 @media (max-width:520px){.astats{grid-template-columns:repeat(2,1fr)}.av{font-size:22px}}
@@ -310,6 +328,7 @@ textarea.txt::placeholder{color:var(--faint)}
     <div class="search"><input id="q" type="search" placeholder="Search all notes" autocomplete="off" aria-label="Search notes"></div>
     <button class="navbtn" id="navDl"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.8v2.5M10.5 1.8v2.5"/></svg>Deadlines &amp; calendar<span class="badge" id="dlBadge" hidden></span></button>
     <button class="navbtn" id="navAp"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4.5" width="12" height="9" rx="2"/><path d="M5.8 4.5V3.2c0-.6.5-1 1-1h2.4c.6 0 1 .4 1 1v1.3M2 8.5h12"/></svg>Internships<span class="badge" id="apBadge" hidden></span></button>
+    <button class="navbtn" id="navJr"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 2.5h7.5a1.5 1.5 0 0 1 1.5 1.5v9.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.5 12a1.5 1.5 0 0 1 1.5-1.5h7.5M6.5 5.5h3.5"/></svg>Journal</button>
     <nav class="tree" id="tree"></nav>
     <button class="sbtn" id="newCourse"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 2v10M2 7h10"/></svg>New course</button>
     <button class="sbtn" id="syncBtn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5A5 5 0 0 0 3 4M2 8.5A5 5 0 0 0 11 10"/><path d="M3 1.5V4h2.5M11 12.5V10H8.5"/></svg>Sync with GitHub</button>
@@ -350,7 +369,7 @@ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 var S={courses:{},pages:{},apps:{},dl:{},dlUpd:0,tomb:{},cur:null,q:'',loaded:false,view:'notes',dtab:'list',month:{y:new Date().getFullYear(),m:new Date().getMonth()},sel:null};
 var UI=lsGet('ln-ui',{collapsed:{},last:null});
 /* reopen the view you were on (a note, Deadlines or Internships) after a refresh */
-if(UI.view==='deadlines'||UI.view==='apps')S.view=UI.view;
+if(UI.view==='deadlines'||UI.view==='apps'||UI.view==='journal')S.view=UI.view;
 if(UI.dtab==='cal')S.dtab='cal';
 function setView(v){S.view=v;UI.view=v;lsSet('ln-ui',UI)}
 var col=null, mode='local';
@@ -538,6 +557,7 @@ function applyMerged(M){
   var dlCh=canon(S.dl)!==oldDl,allCh=canon({c:S.courses,p:S.pages})!==oldAll,appsCh=canon(S.apps)!==oldApps;
   if(appsCh){updateAppsBadge();updateBadge();if(S.view==='deadlines')dlCh=true}
   if(S.view==='apps'){if(appsCh&&!docFocused())renderApps();if(allCh)renderTree();return}
+  if(S.view==='journal'){if(allCh&&!docFocused())renderJournal();return}
   if(!dlCh&&!allCh)return;
   if(!S.cur&&UI.last&&S.pages[UI.last]&&S.view==='notes')S.cur=UI.last;
   renderTree();
@@ -732,7 +752,7 @@ function loadImg(k){
   return p;
 }
 function hydrateImgs(){
-  Array.prototype.forEach.call(document.querySelectorAll('#blocks img[data-img]'),function(el){
+  Array.prototype.forEach.call(document.querySelectorAll('#doc img[data-img]'),function(el){
     var k=el.dataset.img,w=el.parentNode;if(!k){w.classList.add('miss');return}
     if(IMG_URL[k]){el.src=IMG_URL[k];return}
     loadImg(k).then(function(u){el.src=u;w.classList.remove('miss')},function(){w.classList.add('miss')});
@@ -1252,6 +1272,84 @@ $('#doc').addEventListener('mousemove',function(e){
 });
 $('#doc').addEventListener('mouseleave',function(){var tip=$('.atip');if(tip)tip.hidden=true});
 
+/* ---------- journal ----------
+   Entries are ordinary pages marked journal:true (no course), so the note editor, pictures, quotes,
+   undo and sync all work unchanged. The Journal view shows them as a board of cards. */
+function isJournal(p){return !!(p&&p.journal)}
+function journalIds(){
+  return Object.keys(S.pages).filter(function(id){return isJournal(S.pages[id])}).sort(function(a,b){
+    var A=S.pages[a],B=S.pages[b];return (B.date||'').localeCompare(A.date||'')||(B.created||0)-(A.created||0)});
+}
+function showJournal(){setView('journal');renderTree();renderDoc();$('#app').classList.remove('open')}
+function newJournal(first){
+  var id='p_'+rid(),now=Date.now();
+  S.pages[id]={type:'page',journal:true,course:'',title:'',date:today(),blocks:[first||mk('p')],created:now,updated:now};
+  touch(id);openPage(id);return id;
+}
+function journalCard(id){
+  var p=S.pages[id],img=null,quote='',text='';
+  p.blocks.forEach(function(b){
+    if(b.t==='img'&&!img&&b.img)img=b;
+    else if(b.t==='quote'&&!quote)quote=textOf(b.x).trim();
+    else if(['p','h1','h2','h3','ul','ol','callout','todo'].indexOf(b.t)>-1&&text.length<160)text+=(text?' ':'')+textOf(b.x).trim();
+  });
+  text=text.trim();if(text.length>160)text=text.slice(0,157).trim()+'…';
+  var nImg=p.blocks.filter(function(b){return b.t==='img'}).length;
+  var d=p.date?new Date(p.date+'T12:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}):'';
+  return '<button class="jcard" data-jo="'+id+'">'+
+    (img?'<span class="jimg"><img data-img="'+esc(img.img)+'" alt=""'+(img.w&&img.h?' width="'+img.w+'" height="'+img.h+'"':'')+'>'+(nImg>1?'<span class="jn">+'+(nImg-1)+'</span>':'')+'</span>':'')+
+    '<span class="jbody"><span class="jdate">'+esc(d)+'</span>'+
+    (p.title?'<span class="jtitle">'+esc(p.title)+'</span>':'')+
+    (quote?'<span class="jquote">'+esc(quote)+'</span>':'')+
+    (text?'<span class="jtext">'+esc(text)+'</span>':'')+
+    (!p.title&&!quote&&!text&&!img?'<span class="jtext">Empty entry</span>':'')+
+    '</span></button>';
+}
+function renderJournal(){
+  var ids=journalIds(),q=String(S.jq||'').trim().toLowerCase();
+  if(q)ids=ids.filter(function(id){var p=S.pages[id];return (p.title||'').toLowerCase().indexOf(q)>-1||p.blocks.some(function(b){return textOf(b.x).toLowerCase().indexOf(q)>-1})});
+  var all=journalIds().length;
+  var h='<div class="dh"><div><h2 class="dt">Journal</h2><div class="dsum">'+(all?all+' entr'+(all===1?'y':'ies')+' · drop or paste pictures here to start a new one':'Thoughts, quotes and pictures that inspire you. Drop or paste pictures here to start an entry.')+'</div></div>'+
+    '<div class="dact"><button class="btn sec" data-jx="quote">Add a quote</button><button class="btn" data-jx="new">New entry</button></div></div>';
+  if(all)h+='<div class="jtools"><input id="jQ" class="aq" type="search" placeholder="Search journal…" autocomplete="off" aria-label="Search journal" value="'+esc(S.jq||'')+'"></div>';
+  h+=ids.length?'<div class="jgrid">'+ids.map(journalCard).join('')+'</div>':
+    (all?'<div class="dempty">No entries match “'+esc(S.jq.trim())+'”.</div>':'<div class="jdrop">Drop pictures here, paste one with Cmd+V, or start with <b>New entry</b>.</div>');
+  $('#doc').innerHTML=h;
+  renderCrumb();hydrateImgs();
+}
+function journalImages(files){
+  var id=newJournal();var p=S.pages[id];
+  insertImages(files,p.blocks[0].id,false,true);
+}
+$('#doc').addEventListener('click',function(e){
+  if(S.view!=='journal')return;
+  var c=e.target.closest('[data-jo]');if(c){openPage(c.dataset.jo);return}
+  var x=e.target.closest('[data-jx]');if(!x)return;
+  if(x.dataset.jx==='new'){newJournal();var t=$('#ptitle');if(t)t.focus()}
+  else if(x.dataset.jx==='quote'){var qb=mk('quote');newJournal(qb);S.pages[S.cur].blocks.push(mk('p'));renderBlocks(qb.id,0)}
+});
+$('#doc').addEventListener('input',function(e){
+  if(S.view!=='journal'||e.target.id!=='jQ')return;
+  var pos=e.target.selectionStart;S.jq=e.target.value;renderJournal();var n=$('#jQ');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}
+});
+$('#doc').addEventListener('dragover',function(e){if(S.view==='journal'&&hasFiles(e)){e.preventDefault();e.dataTransfer.dropEffect='copy';$('#doc').classList.add('jover')}});
+$('#doc').addEventListener('dragleave',function(e){if(!e.relatedTarget||!$('#doc').contains(e.relatedTarget))$('#doc').classList.remove('jover')});
+$('#doc').addEventListener('drop',function(e){
+  $('#doc').classList.remove('jover');
+  if(S.view!=='journal'||!hasFiles(e))return;
+  e.preventDefault();e.stopImmediatePropagation(); // the editor's own drop handler must not add them a second time
+  var fs=Array.prototype.slice.call(e.dataTransfer.files||[]).filter(function(f){return /^image\//.test(f.type)});
+  if(fs.length)journalImages(fs);else toast('Only pictures can be dropped here');
+});
+document.addEventListener('paste',function(e){
+  if(S.view!=='journal')return;
+  var a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.isContentEditable))return;
+  var imgs=clipImages(e.clipboardData);if(!imgs.length)return;
+  e.preventDefault();journalImages(imgs);
+});
+$('#navJr').addEventListener('click',showJournal);
+$('#crumb').addEventListener('click',function(e){if(e.target.closest('[data-go="journal"]'))showJournal()});
+
 /* ---------- sidebar ---------- */
 var CHEV='<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 1.5L7 5 3.5 8.5"/></svg>';
 function pageMatches(p,q){return (p.title||'').toLowerCase().indexOf(q)>-1||p.blocks.some(function(b){return textOf(b.x).toLowerCase().indexOf(q)>-1})}
@@ -1279,16 +1377,17 @@ function renderTree(){
   $('#tree').innerHTML=h;
   $('#sfoot').textContent=mode==='db'?'Notes are private to you.':syOn()?'Notes sync to GitHub ('+SY.repo+').':'Notes are saved in this browser only.';
   $('#syncBtn').hidden=mode==='db';
-  $('#navDl').classList.toggle('on',S.view==='deadlines');$('#navAp').classList.toggle('on',S.view==='apps');
+  $('#navDl').classList.toggle('on',S.view==='deadlines');$('#navAp').classList.toggle('on',S.view==='apps');$('#navJr').classList.toggle('on',S.view==='journal'||S.view==='notes'&&isJournal(cp()));
   updateBadge();updateAppsBadge();
 }
 function renderCrumb(){
   var p=cp(),el=$('#crumb');
+  if(S.view==='journal'){el.innerHTML='<b>Journal</b>';$('#copyMd').hidden=true;$('#delPage').hidden=true;return}
   if(S.view==='apps'){el.innerHTML='<b>Internships</b>';$('#copyMd').hidden=true;$('#delPage').hidden=true;return}
   if(S.view==='deadlines'){el.innerHTML='<b>Deadlines &amp; calendar</b>';$('#copyMd').hidden=true;$('#delPage').hidden=true;return}
   if(!p){el.textContent='';$('#copyMd').hidden=true;$('#delPage').hidden=true;return}
   var c=S.courses[p.course];
-  el.innerHTML=esc(c?c.name:'')+' / <b>'+esc(p.title||'Untitled')+'</b>';
+  el.innerHTML=(isJournal(p)?'<button class="crumbln" data-go="journal">Journal</button>':esc(c?c.name:''))+' / <b>'+esc(p.title||'Untitled')+'</b>';
   $('#copyMd').hidden=false;$('#delPage').hidden=false;
 }
 
@@ -1302,12 +1401,13 @@ function openPage(id){
 function renderDoc(){
   closePop();
   var doc=$('#doc');
-  doc.className='doc'+(S.view==='deadlines'||S.view==='apps'?' wide':'');
+  doc.className='doc'+(S.view==='deadlines'||S.view==='apps'||S.view==='journal'?' wide':'');
   if(!S.loaded){doc.innerHTML='<div class="empty"><p>Loading your notes…</p></div>';renderCrumb();return}
   if(S.view==='deadlines'){renderDeadlines();return}
   if(S.view==='apps'){renderApps();return}
+  if(S.view==='journal'){renderJournal();return}
   var cids=Object.keys(S.courses);
-  if(!cids.length){
+  if(!cids.length&&!isJournal(cp())){
     S.cur=null;renderCrumb();
     doc.innerHTML='<div class="empty"><h2>Start with a course</h2><p>Each course keeps its lectures together. Add one, then write notes the way you would in Notion: type / for headings, lists, to-dos and code.</p>'+
       '<div class="row"><input class="field" id="wc" placeholder="Course name, e.g. Statistics 101" aria-label="Course name"><button class="btn" id="wcBtn">Create course</button></div>'+
@@ -1318,7 +1418,7 @@ function renderDoc(){
   if(!p){
     var first=null;
     cids.some(function(c){var l=sortedPages(c);if(l.length){first=l[0];return true}});
-    if(UI.last&&S.pages[UI.last])first=UI.last;
+    if(UI.last&&S.pages[UI.last]&&!isJournal(S.pages[UI.last]))first=UI.last;
     if(first){S.cur=first;p=cp()}
   }
   if(!p){
@@ -1328,9 +1428,10 @@ function renderDoc(){
   }
   renderCrumb();
   var opts=cids.map(function(c){return '<option value="'+c+'"'+(c===p.course?' selected':'')+'>'+esc(S.courses[c].name)+'</option>'}).join('');
-  doc.innerHTML='<div class="ptitle" id="ptitle" contenteditable="plaintext-only" data-ph="Untitled lecture" spellcheck="true"></div>'+
-    '<div class="meta"><label for="pcourse">Course<select id="pcourse">'+opts+'</select></label><label for="pdate">Date<input type="date" id="pdate"></label><span class="ed" id="edited">'+esc(editedText(p))+'</span></div>'+
-    '<div id="blocks"></div><div class="endpad" id="endpad"></div><div class="hint">Type / for blocks. Markdown shortcuts work: # heading, - bullet, [] to-do, ``` code. Ctrl/Cmd+B and I format text.</div>';
+  var jr=isJournal(p);
+  doc.innerHTML='<div class="ptitle" id="ptitle" contenteditable="plaintext-only" data-ph="'+(jr?'Untitled entry':'Untitled lecture')+'" spellcheck="true"></div>'+
+    '<div class="meta">'+(jr?'<span class="jtag">Journal</span>':'<label for="pcourse">Course<select id="pcourse">'+opts+'</select></label>')+'<label for="pdate">Date<input type="date" id="pdate"></label><span class="ed" id="edited">'+esc(editedText(p))+'</span></div>'+
+    '<div id="blocks"></div><div class="endpad" id="endpad"></div><div class="hint">'+(jr?'Type / for a quote, heading or list. Paste or drag pictures anywhere in the entry. &gt; then space starts a quote.':'Type / for blocks. Markdown shortcuts work: # heading, - bullet, [] to-do, ``` code. Ctrl/Cmd+B and I format text.')+'</div>';
   $('#ptitle').textContent=p.title||'';
   $('#pdate').value=p.date||'';
   if(!p.blocks.length)p.blocks.push(mk('p'));
@@ -1536,7 +1637,9 @@ function loadExample(){
 function deletePage(id){
   var p=S.pages[id];if(!p)return;
   var cid=p.course;delete S.pages[id];removeDoc(id);
-  S.cur=null;var l=sortedPages(cid);if(l.length)S.cur=l[0];
+  S.cur=null;
+  if(isJournal(p)){showJournal();return}
+  var l=sortedPages(cid);if(l.length)S.cur=l[0];
   renderTree();renderDoc();
 }
 function deleteCourse(cid){
@@ -1642,7 +1745,7 @@ function chipHTML(it){
 function calHTML(){
   var m=S.month,first=new Date(m.y,m.m,1),start=first.getDay(),days=new Date(m.y,m.m+1,0).getDate(),map={};
   allDl().forEach(function(d){var k=dKey(d);(map[k]=map[k]||[]).push(Object.assign({k:'d'},d))});
-  Object.keys(S.pages).forEach(function(id){var p=S.pages[id];if(p.date)(map[p.date]=map[p.date]||[]).push({id:id,k:'n',title:p.title||'Untitled'})});
+  Object.keys(S.pages).forEach(function(id){var p=S.pages[id];if(p.date&&!p.journal)(map[p.date]=map[p.date]||[]).push({id:id,k:'n',title:p.title||'Untitled'})});
   var tk=ymd(new Date());
   var h='<div class="calhead"><button class="ghost" data-dl="prev" aria-label="Previous month">‹</button><div class="calt">'+esc(first.toLocaleDateString(undefined,{month:'long',year:'numeric'}))+'</div><button class="ghost" data-dl="todaym">Today</button><button class="ghost" data-dl="next" aria-label="Next month">›</button></div>';
   h+='<div class="cal">'+WD.map(function(w){return '<div class="wd">'+w+'</div>'}).join('');
