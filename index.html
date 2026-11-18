@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Lecture Notebook</title>
+<title>Fan’s Personal Matters</title>
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="Notebook">
+<meta name="apple-mobile-web-app-title" content="Fan’s Matters">
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=JetBrains+Mono:wght@400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
 <style>
 /* Layout: course tree on the left, one page open on the right, blocks edited in place like a Notion page. */
 :root{
@@ -117,6 +117,22 @@ svg{display:block}
 .blk[data-t="h2"] .txt{font:500 24px/1.3 var(--serif);margin-top:20px;font-style:italic;letter-spacing:-.2px}
 .blk[data-t="h3"] .txt{font:600 18px/1.4 var(--sans);margin-top:12px}
 .blk[data-t="quote"] .txt{border-left:3px solid var(--fg);padding-left:14px;margin:4px 0;font-family:var(--serif);font-size:18px}
+.blk.jq{display:block;margin:12px 0}
+.qcard{background:var(--qbg,#a8441a);color:var(--qfg,#fbf1e6);transition:background .2s;border-radius:14px;padding:22px 26px 16px;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 6px 20px rgba(120,45,10,.18)}
+.qmark{display:block;font:700 64px/1 Georgia,serif;height:34px;margin:-6px 0 6px -2px;color:var(--qfg)}
+.blk.jq .qcard .txt{border:0;padding:0;margin:0;font:400 23px/1.65 'EB Garamond',Georgia,serif;color:var(--qfg);letter-spacing:.1px}
+.blk.jq .qcard .txt:empty::before{color:var(--qfg);opacity:.55}
+.qfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.qa{flex:1;min-width:0;outline:none;font:400 15px/1.4 var(--sans);color:var(--qfg);opacity:.78}
+.qa:empty::before{content:attr(data-ph);opacity:.6}
+.qbm{color:var(--qfg);opacity:.7;padding:4px;border-radius:6px;flex:none}
+.qbm:hover{background:rgba(127,127,127,.18);opacity:1}.qbm.on{opacity:1}.qbm.on svg{fill:currentColor}
+.qsw{display:flex;gap:6px;opacity:0;transition:opacity .15s}
+.qcard:hover .qsw,.qcard:focus-within .qsw{opacity:1}
+@media (hover:none){.qsw{opacity:.85}}
+.qsw button{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1px rgba(127,127,127,.45)}
+.qsw button.on{box-shadow:0 0 0 2px var(--qbg),0 0 0 3.5px var(--qfg)}
+.blk.jq .handle{top:14px}
 .blk[data-t="callout"]{background:var(--callout);border-radius:6px;padding:8px 12px;margin:6px 0}
 .blk[data-t="code"]{display:block;margin:6px 0}
 textarea.txt{display:block;width:100%;resize:none;overflow:hidden;background:var(--code);border:1px solid var(--line);border-radius:6px;
@@ -200,9 +216,20 @@ textarea.txt::placeholder{color:var(--faint)}
 .jbody{display:block;padding:12px 14px 14px}
 .jdate{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .jtitle{display:block;font:600 18px/1.3 var(--serif);margin-top:4px}
-.jquote{display:block;font:italic 400 17px/1.45 var(--serif);border-left:3px solid var(--accent);padding-left:10px;margin-top:8px;color:var(--fg)}
+.jquote{display:block;background:var(--qbg,#a8441a);color:var(--qfg,#fbf1e6);border-radius:10px;padding:12px 14px;margin-top:8px;font:400 17px/1.5 'EB Garamond',Georgia,serif}
+.jqm{display:block;font:700 34px/1 Georgia,serif;height:18px;margin-bottom:2px}
+.jqa{display:block;font:400 12.5px var(--sans);opacity:.78;margin-top:8px}
+.jnew{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:120px;border-style:dashed;color:var(--muted);font-weight:500;background:transparent}
+.jnew:hover{color:var(--fg);border-color:var(--accent)}
+.jplus{font:300 34px/1 var(--sans);color:var(--accent)}
+.jadd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:18px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
+.jadd span{font-size:12px;color:var(--muted);font-weight:500;margin-right:4px}
+.jadd button{padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;background:var(--bg)}
+.jadd button:hover{border-color:var(--accent);background:var(--accent-soft)}
+.jadd b{font:700 16px/1 Georgia,serif;color:#a8441a}
 .jtext{display:block;font-size:13.5px;color:var(--muted);margin-top:6px;line-height:1.5}
-.jdrop{border:2px dashed var(--line);border-radius:14px;padding:46px 20px;text-align:center;color:var(--muted)}
+.jdrop{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;border:2px dashed var(--line);border-radius:14px;padding:44px 20px;text-align:center;color:var(--muted)}
+.jdrop b{color:var(--fg);font-size:16px}.jdrop:hover{border-color:var(--accent);color:var(--fg)}
 .doc.jover{outline:2px dashed var(--accent);outline-offset:6px;border-radius:12px}
 .astats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0 10px}
 @media (min-width:1180px){.astats{grid-template-columns:repeat(6,1fr)}}
@@ -324,7 +351,7 @@ textarea.txt::placeholder{color:var(--faint)}
 <body>
 <div class="app" id="app">
   <aside class="side" id="side" aria-label="Courses">
-    <div class="brand"><img class="logo" src="favicon.svg" alt="FZ"><div><small>Class notes</small>Lecture Notebook</div></div>
+    <div class="brand"><img class="logo" src="favicon.svg" alt="FZ"><div>Fan’s Personal Matters</div></div>
     <div class="search"><input id="q" type="search" placeholder="Search all notes" autocomplete="off" aria-label="Search notes"></div>
     <button class="navbtn" id="navDl"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.8v2.5M10.5 1.8v2.5"/></svg>Deadlines &amp; calendar<span class="badge" id="dlBadge" hidden></span></button>
     <button class="navbtn" id="navAp"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4.5" width="12" height="9" rx="2"/><path d="M5.8 4.5V3.2c0-.6.5-1 1-1h2.4c.6 0 1 .4 1 1v1.3M2 8.5h12"/></svg>Internships<span class="badge" id="apBadge" hidden></span></button>
@@ -1276,6 +1303,9 @@ $('#doc').addEventListener('mouseleave',function(){var tip=$('.atip');if(tip)tip
    Entries are ordinary pages marked journal:true (no course), so the note editor, pictures, quotes,
    undo and sync all work unchanged. The Journal view shows them as a board of cards. */
 function isJournal(p){return !!(p&&p.journal)}
+/* quote card colors: neutral and chic; [background, text] */
+var QCOL={terracotta:['Terracotta','#a8441a','#fbf1e6'],clay:['Clay','#b07d5b','#fff8f0'],sand:['Sand','#e3d4bb','#3b2f25'],stone:['Stone','#8f857a','#fbf7f1'],olive:['Olive','#5c6246','#f4f0e4'],espresso:['Espresso','#3b2b22','#f3e9dd'],ink:['Ink','#25282d','#ece8e1']};
+function qStyle(k){var c=QCOL[k]||QCOL.terracotta;return '--qbg:'+c[1]+';--qfg:'+c[2]}
 function journalIds(){
   return Object.keys(S.pages).filter(function(id){return isJournal(S.pages[id])}).sort(function(a,b){
     var A=S.pages[a],B=S.pages[b];return (B.date||'').localeCompare(A.date||'')||(B.created||0)-(A.created||0)});
@@ -1287,10 +1317,10 @@ function newJournal(first){
   touch(id);openPage(id);return id;
 }
 function journalCard(id){
-  var p=S.pages[id],img=null,quote='',text='';
+  var p=S.pages[id],img=null,quote='',qa='',qk='',text='';
   p.blocks.forEach(function(b){
     if(b.t==='img'&&!img&&b.img)img=b;
-    else if(b.t==='quote'&&!quote)quote=textOf(b.x).trim();
+    else if(b.t==='quote'&&!quote){quote=textOf(b.x).trim();qa=(b.a||'').trim();qk=b.qc}
     else if(['p','h1','h2','h3','ul','ol','callout','todo'].indexOf(b.t)>-1&&text.length<160)text+=(text?' ':'')+textOf(b.x).trim();
   });
   text=text.trim();if(text.length>160)text=text.slice(0,157).trim()+'…';
@@ -1300,7 +1330,7 @@ function journalCard(id){
     (img?'<span class="jimg"><img data-img="'+esc(img.img)+'" alt=""'+(img.w&&img.h?' width="'+img.w+'" height="'+img.h+'"':'')+'>'+(nImg>1?'<span class="jn">+'+(nImg-1)+'</span>':'')+'</span>':'')+
     '<span class="jbody"><span class="jdate">'+esc(d)+'</span>'+
     (p.title?'<span class="jtitle">'+esc(p.title)+'</span>':'')+
-    (quote?'<span class="jquote">'+esc(quote)+'</span>':'')+
+    (quote?'<span class="jquote" style="'+qStyle(qk)+'"><span class="jqm">“</span>'+esc(quote.length>320?quote.slice(0,317)+'…':quote)+(qa?'<span class="jqa">'+esc(qa)+'</span>':'')+'</span>':'')+
     (text?'<span class="jtext">'+esc(text)+'</span>':'')+
     (!p.title&&!quote&&!text&&!img?'<span class="jtext">Empty entry</span>':'')+
     '</span></button>';
@@ -1309,11 +1339,11 @@ function renderJournal(){
   var ids=journalIds(),q=String(S.jq||'').trim().toLowerCase();
   if(q)ids=ids.filter(function(id){var p=S.pages[id];return (p.title||'').toLowerCase().indexOf(q)>-1||p.blocks.some(function(b){return textOf(b.x).toLowerCase().indexOf(q)>-1})});
   var all=journalIds().length;
-  var h='<div class="dh"><div><h2 class="dt">Journal</h2><div class="dsum">'+(all?all+' entr'+(all===1?'y':'ies')+' · drop or paste pictures here to start a new one':'Thoughts, quotes and pictures that inspire you. Drop or paste pictures here to start an entry.')+'</div></div>'+
-    '<div class="dact"><button class="btn sec" data-jx="quote">Add a quote</button><button class="btn" data-jx="new">New entry</button></div></div>';
+  var h='<div class="dh"><div><h2 class="dt">Journal</h2><div class="dsum">'+(all?all+' entr'+(all===1?'y':'ies')+' · drop or paste pictures here to start a new one':'Thoughts, quotes and pictures that inspire you.')+'</div></div>'+
+    '<div class="dact"><button class="btn" data-jx="new">+ Add new</button></div></div>';
   if(all)h+='<div class="jtools"><input id="jQ" class="aq" type="search" placeholder="Search journal…" autocomplete="off" aria-label="Search journal" value="'+esc(S.jq||'')+'"></div>';
-  h+=ids.length?'<div class="jgrid">'+ids.map(journalCard).join('')+'</div>':
-    (all?'<div class="dempty">No entries match “'+esc(S.jq.trim())+'”.</div>':'<div class="jdrop">Drop pictures here, paste one with Cmd+V, or start with <b>New entry</b>.</div>');
+  h+=ids.length?'<div class="jgrid">'+(q?'':'<button class="jcard jnew" data-jx="new"><span class="jplus">+</span>Add new</button>')+ids.map(journalCard).join('')+'</div>':
+    (all?'<div class="dempty">No entries match “'+esc(S.jq.trim())+'”.</div>':'<button class="jdrop" data-jx="new"><span class="jplus">+</span><b>Add new</b><span>Then add text, quotes and pictures inside. You can also drop or paste pictures here.</span></button>');
   $('#doc').innerHTML=h;
   renderCrumb();hydrateImgs();
 }
@@ -1326,7 +1356,6 @@ $('#doc').addEventListener('click',function(e){
   var c=e.target.closest('[data-jo]');if(c){openPage(c.dataset.jo);return}
   var x=e.target.closest('[data-jx]');if(!x)return;
   if(x.dataset.jx==='new'){newJournal();var t=$('#ptitle');if(t)t.focus()}
-  else if(x.dataset.jx==='quote'){var qb=mk('quote');newJournal(qb);S.pages[S.cur].blocks.push(mk('p'));renderBlocks(qb.id,0)}
 });
 $('#doc').addEventListener('input',function(e){
   if(S.view!=='journal'||e.target.id!=='jQ')return;
@@ -1346,6 +1375,44 @@ document.addEventListener('paste',function(e){
   var a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.isContentEditable))return;
   var imgs=clipImages(e.clipboardData);if(!imgs.length)return;
   e.preventDefault();journalImages(imgs);
+});
+/* inside an entry: Add Text / Quote / Picture, quote author line, favorite bookmark */
+function lastEmptyP(p){var l=p.blocks[p.blocks.length-1];return l&&l.t==='p'&&!textOf(l.x).trim()?l:null}
+$('#doc').addEventListener('click',function(e){
+  var b=e.target.closest('[data-ja]');if(!b||!isJournal(cp()))return;
+  var p=cp(),k=b.dataset.ja,emp=lastEmptyP(p);
+  if(k==='p'){if(emp){focusBlock(emp.id,0);return}var nb=mk('p');p.blocks.push(nb);renderBlocks(nb.id,0);touchPage();return}
+  if(k==='quote'){var qb=mk('quote');if(UI.qc&&QCOL[UI.qc])qb.qc=UI.qc;if(emp)p.blocks.splice(p.blocks.indexOf(emp),1,qb);else p.blocks.push(qb);p.blocks.push(mk('p'));renderBlocks(qb.id,0);touchPage();return}
+  if(k==='img'){
+    var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;
+    inp.onchange=function(){var fs=Array.prototype.slice.call(inp.files||[]);if(!fs.length)return;var pg=cp(),e2=lastEmptyP(pg),last=pg.blocks[pg.blocks.length-1];insertImages(fs,last&&last.id,false,!!e2)};
+    inp.click();
+  }
+});
+$('#doc').addEventListener('input',function(e){
+  var qa=e.target.closest&&e.target.closest('#blocks .qa');if(!qa)return;
+  if(!qa.textContent)qa.innerHTML='';
+  var b=findBlock(qa.closest('.blk').dataset.id);if(b){b.a=qa.textContent;touchPage()}
+});
+$('#doc').addEventListener('keydown',function(e){
+  var qa=e.target.closest&&e.target.closest('#blocks .qa');if(!qa)return;
+  var id=qa.closest('.blk').dataset.id,p=cp(),i=idxOf(id);
+  if(e.key==='Enter'){e.preventDefault();var nx=p.blocks[i+1];if(!nx||nx.t!=='p'){nx=mk('p');p.blocks.splice(i+1,0,nx);renderBlocks(nx.id,0);touchPage()}else focusBlock(nx.id,0)}
+  else if(e.key==='ArrowUp'||(e.key==='Backspace'&&!qa.textContent)){e.preventDefault();focusBlock(id,'end')}
+});
+$('#doc').addEventListener('mousedown',function(e){if(e.target.closest&&e.target.closest('[data-qbm],[data-ja],[data-qcol]'))e.preventDefault()});
+$('#doc').addEventListener('click',function(e){
+  var sw=e.target.closest('[data-qcol]');if(!sw)return;
+  var blk=sw.closest('.blk'),b=findBlock(blk.dataset.id),k=sw.dataset.qcol;if(!b||!QCOL[k])return;
+  b.qc=k;UI.qc=k;lsSet('ln-ui',UI);
+  blk.querySelector('.qcard').setAttribute('style',qStyle(k));
+  Array.prototype.forEach.call(blk.querySelectorAll('[data-qcol]'),function(n){n.classList.toggle('on',n===sw)});
+  touchPage();
+}); // keep the typing cursor where it is
+$('#doc').addEventListener('click',function(e){
+  var bm=e.target.closest('[data-qbm]');if(!bm)return;
+  var b=findBlock(bm.closest('.blk').dataset.id);if(!b)return;
+  b.c=!b.c;bm.classList.toggle('on',b.c);bm.setAttribute('aria-label',b.c?'Remove from favorites':'Save as favorite');touchPage();
 });
 $('#navJr').addEventListener('click',showJournal);
 $('#crumb').addEventListener('click',function(e){if(e.target.closest('[data-go="journal"]'))showJournal()});
@@ -1431,7 +1498,7 @@ function renderDoc(){
   var jr=isJournal(p);
   doc.innerHTML='<div class="ptitle" id="ptitle" contenteditable="plaintext-only" data-ph="'+(jr?'Untitled entry':'Untitled lecture')+'" spellcheck="true"></div>'+
     '<div class="meta">'+(jr?'<span class="jtag">Journal</span>':'<label for="pcourse">Course<select id="pcourse">'+opts+'</select></label>')+'<label for="pdate">Date<input type="date" id="pdate"></label><span class="ed" id="edited">'+esc(editedText(p))+'</span></div>'+
-    '<div id="blocks"></div><div class="endpad" id="endpad"></div><div class="hint">'+(jr?'Type / for a quote, heading or list. Paste or drag pictures anywhere in the entry. &gt; then space starts a quote.':'Type / for blocks. Markdown shortcuts work: # heading, - bullet, [] to-do, ``` code. Ctrl/Cmd+B and I format text.')+'</div>';
+    '<div id="blocks"></div>'+(jr?'<div class="jadd"><span>Add</span><button data-ja="p">Text</button><button data-ja="quote"><b>“</b> Quote</button><button data-ja="img">Picture</button></div>':'')+'<div class="endpad" id="endpad"></div><div class="hint">'+(jr?'Use the Add buttons, or type / for headings and lists. Paste or drag pictures anywhere. Shift+Enter adds a line inside a quote.':'Type / for blocks. Markdown shortcuts work: # heading, - bullet, [] to-do, ``` code. Ctrl/Cmd+B and I format text.')+'</div>';
   $('#ptitle').textContent=p.title||'';
   $('#pdate').value=p.date||'';
   if(!p.blocks.length)p.blocks.push(mk('p'));
@@ -1442,6 +1509,11 @@ var PH={p:"Type '/' for blocks",h1:'Heading 1',h2:'Heading 2',h3:'Heading 3',ul:
 function blockHTML(b,n){
   var handle='<button class="handle" draggable="true" tabindex="-1" aria-label="Block options">'+GRIP+'</button>';
   if(b.t==='hr')return '<div class="blk hr" data-id="'+b.id+'" data-t="hr">'+handle+'<hr></div>';
+  if(b.t==='quote'&&isJournal(cp()))return '<div class="blk jq" data-id="'+b.id+'" data-t="quote">'+handle+'<div class="qcard" style="'+qStyle(b.qc)+'"><span class="qmark" aria-hidden="true">“</span>'+
+    '<div class="txt" contenteditable="true" data-ph="Type or paste a quote…" spellcheck="true">'+b.x+'</div>'+
+    '<div class="qfoot"><div class="qa" contenteditable="plaintext-only" data-ph="Who said it?" spellcheck="false">'+esc(b.a||'')+'</div>'+
+    '<div class="qsw" role="group" aria-label="Quote color">'+Object.keys(QCOL).map(function(k){return '<button class="'+((b.qc||'terracotta')===k?'on':'')+'" data-qcol="'+k+'" style="background:'+QCOL[k][1]+'" title="'+QCOL[k][0]+'" aria-label="'+QCOL[k][0]+'"></button>'}).join('')+'</div>'+
+    '<button class="qbm'+(b.c?' on':'')+'" data-qbm aria-label="'+(b.c?'Remove from favorites':'Save as favorite')+'" title="Favorite"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M5.5 3h9v14l-4.5-3.4L5.5 17z"/></svg></button></div></div></div>';
   if(b.t==='img')return '<div class="blk img" data-id="'+b.id+'" data-t="img">'+handle+'<figure class="imgw" tabindex="0" aria-label="Image. Backspace deletes it."><img data-img="'+esc(b.img||'')+'" alt=""'+(b.w&&b.h?' width="'+b.w+'" height="'+b.h+'"':'')+'></figure></div>';
   var lvl=LISTS.indexOf(b.t)>-1?Math.min(b.l||0,3):0;
   var mark=b.t==='ul'?'<span class="mk">'+['•','◦','▪','–'][lvl]+'</span>':b.t==='ol'?'<span class="mk num">'+fmtNum(n,lvl)+'</span>':b.t==='todo'?'<button class="chk'+(b.c?' on':'')+'" data-chk aria-label="Toggle done"></button>':'';
@@ -1658,7 +1730,7 @@ function toMd(p){
     if(b.t==='ol')n=(i>0&&p.blocks[i-1].t==='ol')?n+1:1;
     var x=b.t==='code'?b.x:htmlToMd(b.x);
     var ind=LISTS.indexOf(b.t)>-1?new Array((b.l||0)+1).join('  '):'';
-    var line={p:x,h1:'# '+x,h2:'## '+x,h3:'### '+x,ul:ind+'- '+x,ol:ind+n+'. '+x,todo:ind+'- ['+(b.c?'x':' ')+'] '+x,quote:'> '+x,callout:'> **Note:** '+x,code:'```\n'+x+'\n```',hr:'---',img:'![image](images/'+(b.img||'')+')'}[b.t];
+    var line={p:x,h1:'# '+x,h2:'## '+x,h3:'### '+x,ul:ind+'- '+x,ol:ind+n+'. '+x,todo:ind+'- ['+(b.c?'x':' ')+'] '+x,quote:'> '+x+(b.a?'\n>\n> — '+b.a:''),callout:'> **Note:** '+x,code:'```\n'+x+'\n```',hr:'---',img:'![image](images/'+(b.img||'')+')'}[b.t];
     out.push(line);
     var nx=p.blocks[i+1];
     var tight=LISTS.indexOf(b.t)>-1&&nx&&LISTS.indexOf(nx.t)>-1;
