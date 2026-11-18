@@ -70,6 +70,18 @@ svg{display:block}
 .sbtn{display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;border-radius:6px;color:var(--muted);font-weight:500;width:100%}
 .sbtn:hover{background:var(--hover);color:var(--fg)}
 .sfoot{font-size:11px;color:var(--faint);padding:6px 8px 0}
+.gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--bg)}
+.gate[hidden]{display:none}
+.gcard{width:min(400px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.glogo{width:64px;height:64px;border-radius:16px;box-shadow:0 0 0 1px var(--line);margin-bottom:6px}
+.gwarn{font:700 12.5px/1.3 var(--sans);letter-spacing:.14em;color:var(--danger);border:1.5px solid var(--danger);border-radius:999px;padding:7px 14px}
+.gcard h1{font:600 28px/1.2 var(--serif);margin:6px 0 0}
+.gcard p{color:var(--muted);margin:0 0 6px}
+.gcard .field{width:100%;text-align:center;font-size:15px}
+.gcard .btn{width:100%}
+.gerr{min-height:18px;font-size:13px;color:var(--danger)}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .steps{margin:0 0 14px;padding-left:20px;color:var(--muted);font-size:13px}.steps li{margin:4px 0}.steps a{color:var(--accent)}
 #s_m:empty{display:none}#s_m.err{color:var(--danger)}
 
@@ -377,6 +389,17 @@ textarea.txt::placeholder{color:var(--faint)}
 <div class="pop" id="pop" hidden></div>
 <div class="fmt" id="fmt" hidden></div>
 <div id="layer"></div>
+<div class="gate" id="gate" hidden>
+  <form class="gcard" id="gform" autocomplete="off">
+    <img src="favicon.svg" alt="" class="glogo">
+    <div class="gwarn">DO NOT ENTER IF YOU ARE NOT FAN</div>
+    <h1>Fan’s Personal Matters</h1>
+    <p>This space is private. Enter the password to continue.</p>
+    <input type="password" id="gpw" class="field" placeholder="Password" aria-label="Password" autocomplete="current-password">
+    <div class="gerr" id="gerr" role="alert"></div>
+    <button class="btn" type="submit">Enter</button>
+  </form>
+</div>
 
 <script>
 (function(){
@@ -2343,7 +2366,30 @@ function boot(){
     },function(){clearTimeout(slow);if(!S.loaded)loadLocal();else setStatus('error')});
   });
 }
-boot();
+/* password gate: only a salted SHA-256 of the password is in this file; the notes don't load until it matches.
+   A static site can't hide its code, so this keeps casual visitors out; the notes themselves stay in this browser and the private repo. */
+var GATE='e3a8bb09205f2d7a850e6dfb6f43123bdd5f736d5af3439fed44fc814461fe2c';
+/* "remember this browser": the saved token is SHA-256('fpm-remember-v1:'+password), which only the password can produce;
+   this file holds just the hash of that token */
+var GATE_TOKEN_HASH='fc009047701332d4924e89809eaf3b83642638b84e656294de162059964eec42';
+function sha256hex(t){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)).then(function(b){return Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2)}).join('')})}
+function gateOpen(){
+  var g=null;try{g=localStorage.getItem('ln-gate')}catch(e){}
+  if(!g||!window.crypto||!crypto.subtle)return Promise.resolve(false);
+  return sha256hex(g).then(function(h){return h===GATE_TOKEN_HASH},function(){return false});
+}
+gateOpen().then(function(ok){if(ok)boot();else showGate()});
+function showGate(){
+  var gt=$('#gate'),tries=0;gt.hidden=false;$('#app').setAttribute('aria-hidden','true');setTimeout(function(){$('#gpw').focus()},50);
+  $('#gform').addEventListener('submit',function(e){
+    e.preventDefault();var v=$('#gpw').value;if(!v)return;
+    var btn=gt.querySelector('button');btn.disabled=true;
+    sha256hex('fpm-gate-v1:'+v).then(function(h){
+      if(h===GATE){sha256hex('fpm-remember-v1:'+v).then(function(tok){try{localStorage.setItem('ln-gate',tok)}catch(x){}});gt.hidden=true;$('#app').removeAttribute('aria-hidden');boot();return}
+      tries++;setTimeout(function(){btn.disabled=false;$('#gerr').textContent='That’s not it.';$('#gpw').select();gt.querySelector('.gcard').classList.remove('shake');void gt.offsetWidth;gt.querySelector('.gcard').classList.add('shake')},Math.min(400*tries,3000)); // slows down guessing
+    },function(){btn.disabled=false;$('#gerr').textContent='This browser can’t check the password here. Open the site over https.'});
+  });
+}
 })();
 </script>
 
